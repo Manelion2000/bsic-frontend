@@ -1,0 +1,80 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Habilitations</span>
+      <h1 class="page-title">Reinitialisation des comptes</h1>
+      <p class="page-subtitle">Demande, avis du circuit, puis traitement technique audite.</p>
+    </div>
+    <button class="btn btn--light" (click)="reload()">Rafraichir</button>
+  </div>
+  <span class="chip" *ngIf="message">{{ message }}</span>
+
+  <div class="card card--accent">
+    <h3>Nouvelle demande</h3>
+    <div class="form-grid">
+      <label class="form-field">
+        Plateforme
+        <select [(ngModel)]="form.idPlateforme" name="idPlateforme">
+          <option value="">Selectionner</option>
+          <option *ngFor="let p of plateformes" [value]="p.id">{{ p.nom }} - {{ p.typePlateforme }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Motif
+        <textarea rows="3" [(ngModel)]="form.motif" name="motif"></textarea>
+      </label>
+    </div>
+    <div class="form-actions"><button class="btn btn--primary" (click)="create()">Envoyer</button></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Mes demandes</h3>
+      <table class="table"><tbody>
+      <tr *ngFor="let d of mesDemandes"><td>{{ d.nomPlateforme }}</td><td>{{ d.statutDemande }}</td><td><button class="btn btn--small btn--light" (click)="ouvrir(d)">Voir</button></td></tr>
+      <tr *ngIf="!mesDemandes.length"><td>Aucune demande.</td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <h3>Avis a donner</h3>
+      <table class="table"><tbody>
+      <tr *ngFor="let d of aValider"><td>{{ d.nomCompletDemandeur }}</td><td>{{ d.nomPlateforme }}</td><td><button class="btn btn--primary btn--small" (click)="ouvrir(d)">Traiter</button></td></tr>
+      <tr *ngIf="!aValider.length"><td>Aucune demande a valider.</td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <h3>Reinitialisations a traiter</h3>
+      <table class="table"><tbody>
+      <tr *ngFor="let d of aTraiter"><td>{{ d.nomCompletDemandeur }}</td><td>{{ d.nomPlateforme }}</td><td>{{ d.statutTraitement }}</td><td><button class="btn btn--primary btn--small" (click)="ouvrir(d)">Traiter</button></td></tr>
+      <tr *ngIf="!aTraiter.length"><td>Aucune reinitialisation a traiter.</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <div class="details-overlay" *ngIf="selected">
+    <div class="details-modal">
+      <div class="details-header">
+        <h3>{{ selected.nomPlateforme }} - {{ selected.nomCompletDemandeur }}</h3>
+        <button class="btn btn--small btn--light" (click)="fermer()">Fermer</button>
+      </div>
+      <div class="details-grid">
+        <p><span>Type</span><strong>{{ selected.typePlateforme }}</strong></p>
+        <p><span>Validation</span><strong>{{ selected.statutDemande }}</strong></p>
+        <p><span>Traitement</span><strong>{{ selected.statutTraitement || '-' }}</strong></p>
+        <p><span>Traite par</span><strong>{{ selected.nomCompletTraitePar || '-' }}</strong></p>
+        <p class="wide"><span>Motif</span><strong>{{ selected.motif }}</strong></p>
+      </div>
+      <table class="table">
+        <thead><tr><th>Ordre</th><th>Etape</th><th>Validateur</th><th>Statut</th></tr></thead>
+        <tbody><tr *ngFor="let e of selected.etapes"><td>{{ e.ordre }}</td><td>{{ e.nomEtape }}</td><td>{{ e.nomCompletValidateur }}</td><td>{{ e.statutValidation }}</td></tr></tbody>
+      </table>
+      <label class="form-field comment-field">Commentaire<textarea rows="3" [(ngModel)]="commentaire" name="commentaire"></textarea></label>
+      <div class="details-actions">
+        <button class="btn btn--primary" *ngIf="currentEtape(selected)" (click)="valider()">Valider avis</button>
+        <button class="btn btn-reject" *ngIf="currentEtape(selected)" (click)="rejeter()">Rejeter</button>
+        <button class="btn btn--light" *ngIf="selected.idTraitement && selected.statutTraitement !== 'TRAITEE'" (click)="demarrer()">Demarrer traitement</button>
+        <button class="btn btn--primary" *ngIf="selected.idTraitement && selected.statutTraitement !== 'TRAITEE'" (click)="marquerTraitee()">Marquer traitee</button>
+      </div>
+    </div>
+  </div>
+</section>

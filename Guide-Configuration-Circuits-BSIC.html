@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide de Configuration des Circuits de Validation BSIC</title>
+    <style>
+        /* Styles BSIC */
+        :root {
+            --color-primary: #003d82;
+            --color-primary-light: #0066cc;
+            --color-secondary: #f58220;
+            --color-gray-50: #f9fafb;
+            --color-gray-100: #f3f4f6;
+            --color-gray-200: #e5e7eb;
+            --color-gray-300: #d1d5db;
+            --color-gray-600: #4b5563;
+            --color-gray-700: #374151;
+            --color-gray-800: #1f2937;
+            --color-gray-900: #111827;
+            --color-white: #ffffff;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            line-height: 1.6;
+            color: var(--color-gray-800);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: var(--color-white);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--color-primary);
+            margin-top: 2em;
+            margin-bottom: 1em;
+            font-weight: 600;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            border-bottom: 3px solid var(--color-secondary);
+            padding-bottom: 0.5em;
+            margin-bottom: 1.5em;
+        }
+
+        h2 {
+            font-size: 2em;
+            border-bottom: 2px solid var(--color-primary-light);
+            padding-bottom: 0.3em;
+        }
+
+        h3 {
+            font-size: 1.5em;
+            color: var(--color-primary-light);
+        }
+
+        h4 {
+            font-size: 1.2em;
+            color: var(--color-gray-700);
+        }
+
+        p {
+            margin-bottom: 1em;
+            text-align: justify;
+        }
+
+        strong {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        em {
+            color: var(--color-gray-600);
+        }
+
+        code {
+            background: var(--color-gray-100);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: var(--color-primary);
+        }
+
+        pre {
+            background: var(--color-gray-50);
+            border: 1px solid var(--color-gray-200);
+            border-radius: 8px;
+            padding: 1em;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--color-gray-800);
+        }
+
+        ul, ol {
+            margin: 1em 0;
+            padding-left: 2em;
+        }
+
+        li {
+            margin-bottom: 0.5em;
+        }
+
+        a {
+            color: var(--color-primary-light);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        a:hover {
+            border-bottom-color: var(--color-primary-light);
+        }
+
+        blockquote {
+            border-left: 4px solid var(--color-secondary);
+            margin: 1em 0;
+            padding: 1em 1.5em;
+            background: var(--color-gray-50);
+            font-style: italic;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+
+        th, td {
+            border: 1px solid var(--color-gray-200);
+            padding: 0.75em;
+            text-align: left;
+        }
+
+        th {
+            background: var(--color-primary);
+            color: var(--color-white);
+            font-weight: 600;
+        }
+
+        /* Styles pour l'impression */
+        @media print {
+            body {
+                padding: 20px;
+                font-size: 12pt;
+            }
+
+            h1 {
+                font-size: 2em;
+                page-break-after: avoid;
+            }
+
+            h2, h3 {
+                page-break-after: avoid;
+            }
+
+            pre, blockquote {
+                page-break-inside: avoid;
+            }
+
+            a {
+                color: var(--color-primary);
+                text-decoration: underline;
+            }
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3em;
+            padding: 2em;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+            color: var(--color-white);
+            border-radius: 12px;
+        }
+
+        .header h1 {
+            color: var(--color-white);
+            border: none;
+            margin: 0;
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-top: 0.5em;
+        }
+
+        /* Sections */
+        .section {
+            margin: 2em 0;
+            padding: 1.5em;
+            border: 1px solid var(--color-gray-200);
+            border-radius: 8px;
+            background: var(--color-white);
+        }
+
+        .step {
+            margin: 1.5em 0;
+            padding: 1em;
+            border-left: 4px solid var(--color-secondary);
+            background: var(--color-gray-50);
+        }
+
+        .warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1em;
+            margin: 1em 0;
+        }
+
+        .info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 1em;
+            margin: 1em 0;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 3em;
+            padding-top: 2em;
+            border-top: 2px solid var(--color-gray-200);
+            text-align: center;
+            color: var(--color-gray-600);
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Guide de Configuration des Circuits de Validation BSIC</h1>
+        <div class="subtitle">Documentation complète pour la mise en place des workflows d'habilitation</div>
+    </div>
+
+    <h1>Guide de Configuration des Circuits de Validation BSIC</h1><h2>Vue d'ensemble</h2><p>Ce guide présente l'approche complète pour mettre en place des circuits de validation d'habilitation dans le système BSIC. Les circuits permettent de définir des workflows de validation personnalisés pour chaque plateforme.</p><h2>Architecture des Composants</h2><h3>1. BacircuitComponent (<code>/bacircuit</code>)</h3>
+<strong>Rôle</strong>: Interface principale de gestion des circuits
+- <strong>Fonctionnalités</strong>:
+  - Liste des circuits existants
+  - Création de nouveaux circuits
+  - Filtrage et recherche
+  - Actions rapides (configurer, dupliquer, supprimer)
+- <strong>Navigation</strong>: <code>/bacircuit</code></p><h3>2. BacircuitConfigComponent (<code>/bacircuit-config</code>)</h3>
+<strong>Rôle</strong>: Configuration détaillée des circuits
+- <strong>Fonctionnalités</strong>:
+  - Configuration des étapes de validation
+  - Drag & drop pour l'ordonnancement
+  - Templates prédéfinis
+  - Test et validation des circuits
+- <strong>Navigation</strong>: <code>/bacircuit-config/:id</code></p><h3>3. BacircuitWorkflowComponent (<code>/bacircuit-workflow</code>)</h3>
+<strong>Rôle</strong>: Workflow guidé de mise en place
+- <strong>Fonctionnalités</strong>:
+  - Templates de workflow
+  - Suivi de progression
+  - Guide étape par étape
+  - Actions contextuelles
+- <strong>Navigation</strong>: <code>/bacircuit-workflow</code></p><h2>Processus de Configuration Complète</h2><h3>Étape 1: Accès à la Gestion des Circuits</h3><p><li><strong>Navigation</strong>:</li>
+   <code>`</code>
+   Menu principal → Habilitations → Circuits
+   URL: /bacircuit
+   <code>`</code></p><p><li><strong>Interface</strong>:</li>
+   - Liste des circuits existants avec statut
+   - Bouton "Nouveau Circuit"
+   - Filtres par plateforme et recherche</p><h3>Étape 2: Création d'un Nouveau Circuit</h3><h4>Option A: Création Directe</h4>
+<li>Cliquer sur "Nouveau Circuit"</li>
+<li>Remplir le formulaire:</li>
+   - <strong>Nom du Circuit</strong>: Ex: "Circuit Standard Windows"
+   - <strong>Plateforme</strong>: Sélectionner la plateforme cible
+   - <strong>Description</strong>: Optionnel mais recommandé
+<li><strong>Sélection des Étapes</strong>:</li>
+   - Choisir les étapes de validation disponibles
+   - Ordre chronologique important
+   - Types: Département ou Service</p><h4>Option B: Via Workflow Guidé</h4>
+<li>Cliquer sur "Workflow" dans le header</li>
+<li><strong>Choisir un Template</strong>:</li>
+   - <strong>Simple</strong>: 1h 15min, 2 étapes
+   - <strong>Standard</strong>: 2h 30min, 5 étapes (recommandé)
+   - <strong>Complet</strong>: 4h 00min, 5 étapes avancées
+<li><strong>Configurer le Workflow</strong>:</li>
+   - Nom du circuit
+   - Plateforme cible
+   - Description</p><h3>Étape 3: Configuration Détaillée</h3><p><li><strong>Accès</strong>: <code>/bacircuit-config/:id</code> ou bouton "Configurer"</li>
+<li><strong>Informations Générales</strong>:</li>
+   - Nom et description
+   - Plateforme associée
+   - Statut (En configuration / Actif / Inactif)</p><p><li><strong>Configuration des Étapes</strong>:</li>
+   - <strong>Ajout</strong>: Bouton "Ajouter une étape"
+   - <strong>Ordre</strong>: Drag & drop ou flèches haut/bas
+   - <strong>Détails de chaque étape</strong>:
+     - Nom de l'étape
+     - Type (Département/Service)
+     - Fonction requise
+     - Délai de validation (en jours)
+     - Caractère obligatoire
+     - Conditions spécifiques</p><p><li><strong>Templates Prédéfinis</strong>:</li>
+   - <strong>Circuit Standard</strong>: DIT → DRH → DGA → DG
+   - <strong>Circuit Simple</strong>: Manager → DRH
+   - <strong>Circuit Complet</strong>: Employé → Manager → DIT → DRH → DGA → DG</p><h3>Étape 4: Test et Validation</h3><p><li><strong>Test du Circuit</strong>:</li>
+   - Bouton "Tester" dans la configuration
+   - Simulation du workflow
+   - Vérification des étapes</p><p><li><strong>Validation</strong>:</li>
+   - Vérifier l'ordre des étapes
+   - Confirmer les délais
+   - Valider les conditions</p><h3>Étape 5: Activation</h3><p><li><strong>Mise en Production</strong>:</li>
+   - Changer le statut vers "Actif"
+   - Sauvegarder la configuration
+   - Notifier les utilisateurs</p><p><li><strong>Déploiement</strong>:</li>
+   - Le circuit est disponible pour les fiches d'habilitation
+   - Les nouvelles demandes suivent ce workflow</p><h2>Templates Disponibles</h2><h3>Template Standard</h3>
+- <strong>Complexité</strong>: Moyenne
+- <strong>Durée</strong>: 2h 30min
+- <strong>Étapes</strong>: 5
+- <strong>Idéal pour</strong>: La plupart des plateformes standards
+- <strong>Workflow</strong>: Analyse → Configuration étapes → Setup plateforme → Création rôles → Test</p><h3>Template Simple</h3>
+- <strong>Complexité</strong>: Simple
+- <strong>Durée</strong>: 1h 15min
+- <strong>Étapes</strong>: 2
+- <strong>Idéal pour</strong>: Petites équipes, besoins simples
+- <strong>Workflow</strong>: Configuration rapide → Test simple</p><h3>Template Complet</h3>
+- <strong>Complexité</strong>: Complexe
+- <strong>Durée</strong>: 4h 00min
+- <strong>Étapes</strong>: 5
+- <strong>Idéal pour</strong>: Grandes organisations, besoins complexes
+- <strong>Workflow</strong>: Audit complet → Configuration multi-niveaux → Intégration → Test complet → Formation</p><h2>Bonnes Pratiques</h2><h3>1. Planification</h3>
+- <strong>Analyser les besoins</strong>: Comprendre le processus de validation existant
+- <strong>Identifier les acteurs</strong>: Qui doit valider à chaque étape ?
+- <strong>Définir les délais</strong>: Temps raisonnable pour chaque validation</p><h3>2. Configuration</h3>
+- <strong>Ordre logique</strong>: Du plus proche au plus loin hiérarchiquement
+- <strong>Étapes obligatoires</strong>: Marquer les validations critiques
+- <strong>Conditions claires</strong>: Spécifier quand une étape s'applique</p><h3>3. Test</h3>
+- <strong>Scénarios de test</strong>: Couvrir tous les cas possibles
+- <strong>Utilisateurs test</strong>: Tester avec de vrais profils
+- <strong>Validation complète</strong>: S'assurer que le workflow fonctionne</p><h3>4. Maintenance</h3>
+- <strong>Surveillance</strong>: Suivre les performances des circuits
+- <strong>Optimisation</strong>: Ajuster les délais et conditions
+- <strong>Documentation</strong>: Garder les configurations à jour</p><h2>Intégration Technique</h2><h3>Services Backend</h3>
+<code>`</code>typescript
+// Services utilisés
+HabilitationsService
+- getPlateformes()
+- getEtapes()
+- updatePlateformeEtapesConfig()
+- getEtapesByPlateforme()</p><p>NotificationService
+- showSuccess()
+- showError()
+- showWarning()
+<code>`</code></p><h3>Modèles de Données</h3>
+<code>`</code>typescript
+interface CircuitDto {
+  id?: string;
+  nomCircuit: string;
+  plateformeId: string;
+  plateformeNom: string;
+  etapes: CircuitEtapeDto[];
+  statut: 'ACTIF' | 'INACTIF' | 'EN_CONFIGURATION';
+}</p><p>interface EtapeConfigDto {
+  id: string;
+  idEtapeDefinition: string;
+  ordre: number;
+  libelle: string;
+  type: 'DEPARTEMENT' | 'SERVICE';
+  fonctionRequise?: string;
+  delaiValidation?: number;
+  obligatoire: boolean;
+}
+<code>`</code></p><h3>Navigation</h3>
+<code>`</code>typescript
+// Routes principales
+/bacircuit                    // Liste des circuits
+/bacircuit-config/:id         // Configuration détaillée
+/bacircuit-workflow           // Workflow guidé</p><p>// Routes liées
+/habilitations-etapes         // Gestion des étapes
+/habilitations-plateformes    // Gestion des plateformes
+/habilitations-workflow       // Workflow d'habilitation
+<code>`</code></p><h2>Dépannage</h2><h3>Problèmes Courants</h3><p><li><strong>Circuit ne s'applique pas</strong></li>
+   - Vérifier que le statut est "Actif"
+   - Confirmer que la plateforme est correcte
+   - Redémarrer le workflow</p><p><li><strong>Ordre des étapes incorrect</strong></li>
+   - Utiliser le drag & drop pour réordonner
+   - Sauvegarder après modification
+   - Tester avec une nouvelle fiche</p><p><li><strong>Délais trop courts/longs</strong></li>
+   - Ajuster dans la configuration
+   - Considérer la charge de travail
+   - Prévoir des délais raisonnables</p><p><li><strong>Template ne s'applique pas</strong></li>
+   - Vérifier la compatibilité avec la plateforme
+   - Adapter les étapes si nécessaire
+   - Créer un circuit personnalisé</p><h3>Support Technique</h3><p>- <strong>Logs</strong>: Consulter les logs du backend pour les erreurs
+- <strong>Notifications</strong>: Vérifier les messages d'erreur dans l'interface
+- <strong>Documentation</strong>: Référencer ce guide et la documentation technique</p><h2>Conclusion</h2><p>La mise en place des circuits de validation BSIC est un processus structuré qui permet de créer des workflows adaptés aux besoins spécifiques de chaque organisation. En suivant ce guide et en utilisant les composants disponibles, vous pouvez configurer efficacement des circuits robustes et flexibles.</p><p>Pour toute question ou problème, n'hésitez pas à consulter l'équipe de support technique ou à référencer la documentation complète du système BSIC.
+</p>
+
+    <div class="footer">
+        <p><strong>BSIC - GESTSTOCK</strong><br>
+        Système de Gestion des Habilitations<br>
+        Document généré le 06/03/2026</p>
+    </div>
+</body>
+</html>

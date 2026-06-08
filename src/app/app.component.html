@@ -1,0 +1,151 @@
+<app-notification></app-notification>
+
+<div class="dialog-backdrop" *ngIf="errorMessage$ | async as errorMessage">
+  <div class="dialog">
+    <div class="dialog__alert">
+      <span class="dialog__alert-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 8v5" />
+          <path d="M12 16h.01" />
+          <path d="M10.3 3.9 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+        </svg>
+      </span>
+      <div>
+        <div class="dialog__title">Erreur</div>
+        <div class="dialog__body">{{ errorMessage }}</div>
+      </div>
+    </div>
+    <div class="dialog__actions">
+      <button class="btn btn--primary" (click)="clearError()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isLoginPage; else appShell" class="login-route">
+  <router-outlet />
+</div>
+
+<ng-template #appShell>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar__brand">
+        <img src="assets/images/bsic.png" alt="BSIC Burkina SA" />
+        <div>
+          <div class="topbar__title">BSIC Burkina SA</div>
+          <div class="topbar__subtitle">Portail BSIC</div>
+        </div>
+      </div>
+      <div class="topbar__center">
+        <span class="topbar__kicker">Operations internes</span>
+        <span>Portail BSIC</span>
+      </div>
+      <div class="topbar__user">
+        <div class="topbar__profile">
+          <span class="topbar__avatar" aria-hidden="true">KA</span>
+          <div class="topbar__user-copy">
+            <span class="topbar__user-label">KONE Aboubacar</span>
+            <span class="topbar__user-status">
+              <span class="topbar__user-dot"></span>
+              Session active
+            </span>
+          </div>
+        </div>
+        <button class="btn btn--light topbar__logout" type="button" (click)="logout()">Deconnexion</button>
+      </div>
+    </header>
+
+    <nav class="subnav">
+      <a class="subnav__link" routerLink="/annuaire/services" routerLinkActive="active">Services</a>
+      <a class="subnav__link" routerLink="/annuaire/departements" routerLinkActive="active">Departements</a>
+      <a class="subnav__link" routerLink="/annuaire/agences" routerLinkActive="active">Agences</a>
+      <a class="subnav__link" routerLink="/annuaire/annuaire" routerLinkActive="active">Annuaire global</a>
+    </nav>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar__group">
+          <div class="sidebar__title">Utilisateurs</div>
+          <a class="sidebar__link" routerLink="/users" routerLinkActive="active">Utilisateurs</a>
+          <a class="sidebar__link" routerLink="/roles" routerLinkActive="active">Roles</a>
+          <a class="sidebar__link" routerLink="/profils" routerLinkActive="active">Profils</a>
+        </div>
+
+        <div class="sidebar__group">
+          <div class="sidebar__title">Annuaire</div>
+          <a class="sidebar__link" routerLink="/annuaire/services" routerLinkActive="active">Services</a>
+          <a class="sidebar__link" routerLink="/annuaire/departements" routerLinkActive="active">Departements</a>
+          <a class="sidebar__link" routerLink="/annuaire/agences" routerLinkActive="active">Agences</a>
+          <a class="sidebar__link" routerLink="/annuaire/employes" routerLinkActive="active">Employes</a>
+          <a class="sidebar__link" routerLink="/annuaire/annuaire" routerLinkActive="active">Annuaire global</a>
+        </div>
+
+        <div class="sidebar__group">
+          <div class="sidebar__title">Habilitations</div>
+          <a class="sidebar__link" routerLink="/habilitations/plateformes" routerLinkActive="active">Plateformes</a>
+          <a class="sidebar__link" routerLink="/habilitations/fiches" routerLinkActive="active">Fiches</a>
+          <a class="sidebar__link" routerLink="/habilitations/validations" routerLinkActive="active">
+            <span>Fiches en attente</span>
+            <span class="sidebar__count-badge" *ngIf="pendingFichesCount > 0">{{ pendingFichesCount }}</span>
+          </a>
+          <a class="sidebar__link" routerLink="/habilitations/comptes" routerLinkActive="active">
+            <span>Creation comptes</span>
+            <span class="sidebar__count-badge" *ngIf="pendingComptesCount > 0">{{ pendingComptesCount }}</span>
+          </a>
+          <a class="sidebar__link" routerLink="/habilitations/reinitialisations-comptes" routerLinkActive="active">Reinitialisation comptes</a>
+          <a class="sidebar__link" routerLink="/habilitations/statistiques-plateformes" routerLinkActive="active">Statistiques plateformes</a>
+          <a class="sidebar__link" routerLink="/habilitations/suivi-plateformes" routerLinkActive="active">Suivi plateformes</a>
+          <a class="sidebar__link" routerLink="/habilitations-workflow" routerLinkActive="active">Workflow Habilitations</a>
+          <a class="sidebar__link" routerLink="/bacircuit" routerLinkActive="active">
+            <span class="sidebar__link-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              Circuits de Validation
+            </span>
+          </a>
+          <a class="sidebar__link" routerLink="/bacircuit-workflow" routerLinkActive="active">
+            <span class="sidebar__link-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              Workflow Circuits
+            </span>
+          </a>
+          <a class="sidebar__link" routerLink="/autorisation-sorties" routerLinkActive="active">
+            <span>Mes autorisations</span>
+            <span class="sidebar__count-badge" *ngIf="pendingAutorisationsCount > 0">{{ pendingAutorisationsCount }}</span>
+          </a>
+          <a class="sidebar__link" routerLink="/reprises-service" routerLinkActive="active">
+            <span>Reprises de service</span>
+            <span class="sidebar__count-badge" *ngIf="pendingReprisesCount > 0">{{ pendingReprisesCount }}</span>
+          </a>
+        </div>
+
+        <div class="sidebar__group">
+          <div class="sidebar__title">Reunions</div>
+          <a class="sidebar__link" routerLink="/reunions" routerLinkActive="active">Reunions</a>
+        </div>
+
+        <div class="sidebar__group">
+          <div class="sidebar__title">Reporting</div>
+          <a class="sidebar__link" routerLink="/reporting" routerLinkActive="active">Reporting</a>
+          <a class="sidebar__link" routerLink="/reporting/autorisations-statistiques" routerLinkActive="active">Stats autorisations</a>
+          <a class="sidebar__link" routerLink="/reporting/autorisations-suivi" routerLinkActive="active">Suivi autorisations</a>
+          <a class="sidebar__link" routerLink="/reporting/reprises-statistiques" routerLinkActive="active">Stats reprises</a>
+          <a class="sidebar__link" routerLink="/reporting/reprises-suivi" routerLinkActive="active">Suivi reprises</a>
+        </div>
+
+        <div class="sidebar__footer">
+          Connecte a bsic-service pour les donnees operationnelles.
+        </div>
+      </aside>
+
+      <main class="content">
+        <router-outlet />
+      </main>
+    </div>
+  </div>
+</ng-template>

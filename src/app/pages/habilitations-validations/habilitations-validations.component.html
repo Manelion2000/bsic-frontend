@@ -1,0 +1,120 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Validations</h1>
+      <p class="page-subtitle">Suivi des demandes et mise a jour des statuts.</p>
+    </div>
+    <span class="chip">{{ message }}</span>
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Employe</th>
+          <th>Departement</th>
+          <th>Plateforme</th>
+          <th>Etape courante</th>
+          <th>Validateur</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="loading">
+          <td colspan="7">Chargement des validations...</td>
+        </tr>
+        <tr *ngIf="!loading && fiches.length === 0">
+          <td colspan="7">Aucune fiche d'habilitation n'est a votre niveau pour le moment.</td>
+        </tr>
+        <tr *ngFor="let fiche of fiches">
+          <td>{{ fiche.nomCompletEmploye }}</td>
+          <td>{{ fiche.nomDepartementEmploye || '-' }}</td>
+          <td>{{ fiche.nomPlateforme }}</td>
+          <td>{{ getEtapeLabel(fiche) }}</td>
+          <td>{{ getValidateurLabel(fiche) }}</td>
+          <td><span class="badge">{{ fiche.statutHabilitation }}</span></td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn--ghost btn--small btn--icon" title="Voir les details" aria-label="Voir les details" [disabled]="detailLoading" (click)="loadFicheDetail(fiche.id)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 5c-5 0-9 4.5-10 7 1 2.5 5 7 10 7s9-4.5 10-7c-1-2.5-5-7-10-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2.2a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="detail-panel" *ngIf="detailVisible && selectedFiche">
+    <div class="detail-panel__header">
+      <div>
+        <span class="detail-panel__eyebrow">Detail de la fiche</span>
+        <h2>{{ selectedFiche.nomCompletEmploye || 'Employe non renseigne' }}</h2>
+      </div>
+      <div class="detail-panel__actions">
+        <button class="btn btn--primary btn--small" [disabled]="isProcessing || !getCurrentEtape(selectedFiche)" (click)="validerCurrentEtape(selectedFiche)">
+          Valider
+        </button>
+        <button class="btn btn--outline btn--small" [disabled]="isProcessing || !getCurrentEtape(selectedFiche)" (click)="rejeterCurrentEtape(selectedFiche)">
+          Rejeter
+        </button>
+        <button class="btn btn--outline btn--small" type="button" (click)="closeDetail()">Fermer</button>
+      </div>
+    </div>
+
+    <div *ngIf="detailLoading" class="detail-panel__loading">Chargement du detail...</div>
+
+    <div class="detail-grid" *ngIf="!detailLoading">
+      <div class="detail-card">
+        <h3>Employe</h3>
+        <p><strong>Matricule</strong><span>{{ selectedFiche.matriculeEmploye || '-' }}</span></p>
+        <p><strong>Departement</strong><span>{{ selectedFiche.nomDepartementEmploye || '-' }}</span></p>
+        <p><strong>Service</strong><span>{{ selectedFiche.nomServiceEmploye || '-' }}</span></p>
+        <p><strong>Agence</strong><span>{{ selectedFiche.nomAgenceEmploye || '-' }}</span></p>
+        <p><strong>Fonction</strong><span>{{ selectedFiche.fonctionEmploye ? getEtapeStatusLabel(selectedFiche.fonctionEmploye) : '-' }}</span></p>
+        <p><strong>Telephone</strong><span>{{ selectedFiche.telephoneMobileEmploye || '-' }}</span></p>
+      </div>
+
+      <div class="detail-card">
+        <h3>Demande</h3>
+        <p><strong>Plateforme</strong><span>{{ selectedFiche.nomPlateforme || '-' }}</span></p>
+        <p><strong>Circuit</strong><span>{{ selectedFiche.nomCircuit || '-' }}</span></p>
+        <p><strong>Priorite</strong><span>{{ selectedFiche.priorite || '-' }}</span></p>
+        <p><strong>Statut</strong><span class="badge">{{ selectedFiche.statutHabilitation || '-' }}</span></p>
+        <p class="detail-card__motif"><strong>Motif</strong><span>{{ selectedFiche.motif || '-' }}</span></p>
+      </div>
+    </div>
+
+    <div class="steps-card" *ngIf="!detailLoading">
+      <div class="steps-card__header">
+        <h3>Circuit de validation</h3>
+        <span>{{ selectedFiche.etapes?.length || 0 }} etape(s)</span>
+      </div>
+
+      <div class="step-list" *ngIf="selectedFiche.etapes?.length; else noEtapes">
+        <div class="step-item" *ngFor="let etape of selectedFiche.etapes">
+          <div class="step-item__rank">#{{ etape.ordre || '-' }}</div>
+          <div class="step-item__body">
+            <div class="step-item__title">{{ getStructureLabel(etape) }}</div>
+            <div class="step-item__meta">
+              <span>{{ etape.typeEtape || '-' }}</span>
+              <span>{{ etape.fonctionRequise ? getEtapeStatusLabel(etape.fonctionRequise) : 'Fonction non renseignee' }}</span>
+              <span>Validateur: {{ etape.nomCompletValidateur || 'Selon la hierarchie' }}</span>
+            </div>
+            <div class="step-item__comment" *ngIf="etape.commentaire">{{ etape.commentaire }}</div>
+          </div>
+          <span class="badge" [class.badge--success]="etape.statutValidation === 'VALIDE'" [class.badge--error]="etape.statutValidation === 'REJETE'">
+            {{ getEtapeStatusLabel(etape.statutValidation) }}
+          </span>
+        </div>
+      </div>
+
+      <ng-template #noEtapes>
+        <div class="empty-state">Aucune etape n'est rattachee a cette fiche.</div>
+      </ng-template>
+    </div>
+  </div>
+</section>

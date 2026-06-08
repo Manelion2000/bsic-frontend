@@ -1,0 +1,42 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Reprises</span>
+      <h1 class="page-title">Statistiques reprises de service</h1>
+      <p class="page-subtitle">Analyse des reprises par statut, departement, demandeur, signataire et periode.</p>
+    </div>
+    <div class="header-actions">
+      <span class="chip" *ngIf="message">{{ message }}</span>
+      <button class="btn btn--light" (click)="reset()">Reinitialiser</button>
+      <button class="btn btn--primary" (click)="reload()">Actualiser</button>
+    </div>
+  </div>
+
+  <div class="card filters-card">
+    <label>Demandeur<select [(ngModel)]="filter.idDemandeur" name="idDemandeur"><option value="">Tous</option><option *ngFor="let u of users" [value]="u.id">{{ u.nom }} {{ u.prenom }} - {{ u.username }}</option></select></label>
+    <label>Signataire<select [(ngModel)]="filter.idValidateur" name="idValidateur"><option value="">Tous</option><option *ngFor="let u of users" [value]="u.id">{{ u.nom }} {{ u.prenom }} - {{ u.username }}</option></select></label>
+    <label>Departement<select [(ngModel)]="filter.idDepartement" name="idDepartement"><option value="">Tous</option><option *ngFor="let d of departements" [value]="d.id">{{ d.nom }}</option></select></label>
+    <label>Statut<select [(ngModel)]="filter.statutValidation" name="statutValidation"><option value="">Tous</option><option value="EN_ATTENTE">EN_ATTENTE</option><option value="VALIDEE">VALIDEE</option><option value="REJETEE">REJETEE</option></select></label>
+    <label>Date debut<input type="date" [(ngModel)]="filter.dateDebut" name="dateDebut"></label>
+    <label>Date fin<input type="date" [(ngModel)]="filter.dateFin" name="dateFin"></label>
+  </div>
+
+  <div class="kpi-grid" *ngIf="stats">
+    <div class="kpi-card"><span>Total</span><strong>{{ stats.total }}</strong></div>
+    <div class="kpi-card"><span>En attente</span><strong>{{ stats.enAttente }}</strong></div>
+    <div class="kpi-card"><span>Validees</span><strong>{{ stats.validees }}</strong></div>
+    <div class="kpi-card"><span>Rejetees</span><strong>{{ stats.rejetees }}</strong></div>
+  </div>
+
+  <div class="stats-grid" *ngIf="stats">
+    <div class="card stat-panel" *ngFor="let block of [
+      {title:'Par departement', items: stats.parDepartement},
+      {title:'Par mois', items: stats.parMois}
+    ]">
+      <h3>{{ block.title }}</h3>
+      <div class="bar-row" *ngFor="let item of block.items">
+        <span>{{ item.libelle }}</span><div><i [style.width.%]="((item.valeur || 0) / max(block.items)) * 100"></i></div><strong>{{ item.valeur }}</strong>
+      </div>
+    </div>
+  </div>
+</section>

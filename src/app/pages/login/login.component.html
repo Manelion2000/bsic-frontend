@@ -1,0 +1,74 @@
+<section class="login-page">
+  <div class="login-shell">
+    <aside class="login-brand">
+      <div class="login-brand__top">
+        <img src="assets/images/bsic.png" alt="BSIC Burkina SA" />
+        <span>Portail interne</span>
+      </div>
+
+      <div class="login-brand__content">
+        <p class="login-eyebrow">BSIC Burkina SA</p>
+        <h1>Controle d'acces unifie</h1>
+        <p>Gestion des utilisateurs, habilitations, circuits et operations internes.</p>
+      </div>
+
+      <div class="login-metrics" aria-label="Modules du portail">
+        <div>
+          <strong>04</strong>
+          <span>Domaines</span>
+        </div>
+        <div>
+          <strong>24/7</strong>
+          <span>Acces</span>
+        </div>
+        <div>
+          <strong>BSIC</strong>
+          <span>Service</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="login-panel">
+      <div class="login-card">
+        <div class="login-header">
+          <img src="assets/images/bsic.png" alt="BSIC Burkina SA" />
+          <div>
+            <h2>Connexion</h2>
+            <p>Identifiez-vous pour continuer.</p>
+          </div>
+        </div>
+
+        <form #loginForm="ngForm" class="login-form">
+          <label class="form-field">
+            Email
+            <input type="email" [(ngModel)]="form.username" name="username" required placeholder="prenom.nom@bsic.bf" />
+            <span class="badge badge--orange" *ngIf="submitted && loginForm.controls['username']?.invalid">Requis</span>
+          </label>
+
+          <label class="form-field">
+            Mot de passe
+            <input type="password" [(ngModel)]="form.password" name="password" required placeholder="Mot de passe" />
+            <span class="badge badge--orange" *ngIf="submitted && loginForm.controls['password']?.invalid">Requis</span>
+          </label>
+
+          <label class="login-remember">
+            <input type="checkbox" [(ngModel)]="form.rememberMe" name="rememberMe" />
+            <span>Se souvenir de moi</span>
+          </label>
+
+          <div class="form-actions login-actions">
+            <button class="btn btn--primary" type="button" (click)="submit(loginForm)">
+              {{ loading ? 'Connexion...' : 'Se connecter' }}
+            </button>
+            <button class="btn btn--outline" type="button" (click)="resetPassword()">
+              Reinitialiser
+            </button>
+          </div>
+
+          <div class="login-message" *ngIf="message">{{ message }}</div>
+          <a class="login-skip" routerLink="/users">Acceder sans connexion</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>

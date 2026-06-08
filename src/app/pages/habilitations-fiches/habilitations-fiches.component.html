@@ -1,0 +1,171 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Habilitations</span>
+      <h1 class="page-title">Fiches d'habilitation</h1>
+      <p class="page-subtitle">Suivi des demandes et du statut de validation.</p>
+    </div>
+    <button class="btn btn--primary" (click)="openCreateForm()">Nouvelle fiche</button>
+  </div>
+
+  <div class="card workspace-panel">
+    <div class="form-grid">
+      <label class="form-field">
+        Recherche
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Employe, plateforme, role..." />
+      </label>
+      <label class="form-field">
+        Taille page
+        <select [(ngModel)]="pageSize">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="8">8</option>
+          <option [ngValue]="15">15</option>
+        </select>
+      </label>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Employe</th>
+          <th>Plateforme</th>
+          <th>Direction</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let fiche of pagedFiches" (click)="selectFiche(fiche)">
+          <td>{{ fiche.nomCompletEmploye }}</td>
+          <td>{{ fiche.nomPlateforme || '-' }}</td>
+          <td>{{ fiche.nomDirectionEmploye || fiche.nomDepartementEmploye || '-' }}</td>
+          <td>
+            <span
+              class="badge"
+              [class.badge--warning]="fiche.statutHabilitation === 'EN_COURS'"
+              [class.badge--success]="fiche.statutHabilitation === 'VALIDEE'"
+              [class.badge--error]="fiche.statutHabilitation === 'REJETEE'"
+            >
+              {{ fiche.statutHabilitation }}
+            </span>
+          </td>
+          <td>
+            <div class="table-actions">
+              <button class="icon-btn" title="Update" aria-label="Update" (click)="selectFiche(fiche); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+              <button class="icon-btn" title="Init etapes" aria-label="Init etapes" (click)="initEtapes(fiche.id); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+              </button>
+              <button class="icon-btn" title="Telecharger PDF" aria-label="Telecharger PDF" (click)="downloadFichePdf(fiche); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3v12" />
+                  <path d="M7 10l5 5 5-5" />
+                  <path d="M5 21h14" />
+                </svg>
+              </button>
+              <button
+                class="icon-btn icon-btn--danger"
+                title="Supprimer"
+                aria-label="Supprimer"
+                [disabled]="deletingId === fiche.id"
+                (click)="deleteFiche(fiche); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="form-actions">
+      <button class="btn btn--light" (click)="prevPage()">Precedent</button>
+      <span class="chip">Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
+      <button class="btn btn--light" (click)="nextPage()">Suivant</button>
+    </div>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+  <form class="card card--accent crud-modal" #ficheForm="ngForm" (click)="$event.stopPropagation()">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <span class="page-header__eyebrow">Nouvelle demande</span>
+        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire fiche</h2>
+        <p class="page-subtitle">{{ message || 'Creer une fiche de demande d\'habilitation.' }}</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Employe
+        <select [(ngModel)]="selectedEmployeId" name="selectedEmployeId" required (ngModelChange)="onEmployeChange()">
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let emp of employes" [value]="emp.id">{{ emp.nom }} {{ emp.prenom }}</option>
+        </select>
+        <span class="badge badge--orange" *ngIf="submitted && ficheForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Matricule employe
+        <input type="text" [ngModel]="form.matriculeEmploye" name="matriculeEmploye" readonly />
+      </label>
+      <label class="form-field">
+        Nom complet employe
+        <input type="text" [ngModel]="form.nomCompletEmploye" name="nomCompletEmploye" readonly />
+      </label>
+      <label class="form-field">
+        Plateformes
+        <select [(ngModel)]="selectedPlateformeIds" name="selectedPlateformeIds" required multiple size="5" (ngModelChange)="loadPlateformeRoles()">
+          <option *ngFor="let p of plateformes" [value]="p.id">{{ p.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Plateformes choisies
+        <input type="text" [ngModel]="form.nomPlateforme || '-'" name="nomPlateforme" readonly />
+      </label>
+      <label class="form-field">
+        Circuit lie
+        <input type="text" [ngModel]="form.nomCircuit || 'Aucun circuit lie'" name="nomCircuit" readonly />
+      </label>
+      <label class="form-field">
+        Motif
+        <textarea rows="3" [(ngModel)]="form.motif" name="motif" required placeholder="Motif et contexte..."></textarea>
+        <span class="badge badge--orange" *ngIf="submitted && ficheForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Priorite
+        <select [(ngModel)]="form.priorite" name="priorite">
+          <option>BASSE</option>
+          <option>NORMALE</option>
+          <option>HAUTE</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Statut
+        <select [(ngModel)]="form.statutHabilitation" name="statutHabilitation">
+          <option>EN_COURS</option>
+          <option>VALIDEE</option>
+          <option>REJETEE</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Telephone mobile
+        <input type="text" [(ngModel)]="form.telephoneMobileEmploye" name="telephoneMobileEmploye" placeholder="+226 70 00 00 00" />
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" type="button" (click)="create(ficheForm)">Enregistrer</button>
+      <button class="btn btn--outline" type="button" (click)="initEtapes()">Init etapes</button>
+      <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+    </div>
+  </form>
+  </div>
+</section>
+

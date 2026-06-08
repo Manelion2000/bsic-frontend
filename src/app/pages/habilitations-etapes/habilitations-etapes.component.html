@@ -1,0 +1,108 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Etapes d'habilitation</h1>
+      <p class="page-subtitle">Workflow de validation des demandes d'acces.</p>
+    </div>
+    <button class="btn btn--primary" (click)="openCreateForm()">Nouvelle etape</button>
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Libelle</th>
+          <th>Type</th>
+          <th>Departement</th>
+          <th>Service</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let etape of etapes" (click)="selectEtape(etape)">
+          <td>{{ etape.libelle }}</td>
+          <td>{{ etape.type }}</td>
+          <td>{{ etape.nomDepartement }}</td>
+          <td>{{ etape.nomService }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="icon-btn" title="Update" aria-label="Update" (click)="selectEtape(etape); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+              <button class="icon-btn icon-btn--danger" disabled title="Supprimer indisponible" aria-label="Supprimer indisponible">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+  <form class="card card--accent crud-modal" #etapeForm="ngForm" (click)="$event.stopPropagation()">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire etape</h2>
+        <p class="page-subtitle">{{ message || 'Configurer l\'ordre et les validations.' }}</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Libelle
+        <input type="text" [(ngModel)]="form.libelle" name="libelle" required placeholder="Validation manager" />
+        <span class="badge badge--orange" *ngIf="submitted && etapeForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Type
+        <select [(ngModel)]="form.type" name="type" required>
+          <option>DEPARTEMENT</option>
+          <option>SERVICE</option>
+        </select>
+        <span class="badge badge--orange" *ngIf="submitted && etapeForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Fonction requise
+        <select [(ngModel)]="form.fonctionRequise" name="fonctionRequise">
+          <option [ngValue]="undefined">Selectionner</option>
+          <option>DIRECTEUR</option>
+          <option>CHEF_SERVICE</option>
+          <option>DIRECTEUR_GENERAL</option>
+          <option>DIRECTEUR_GENERAL_ADJOINT</option>
+          <option>AGENT</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Role code
+        <input type="text" [(ngModel)]="form.roleCode" name="roleCode" placeholder="ROLE_MANAGER" />
+      </label>
+      <label class="form-field">
+        Departement
+        <select [(ngModel)]="form.idDepartement" name="idDepartement">
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let dep of departements" [value]="dep.id">{{ dep.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Service
+        <select [(ngModel)]="form.idService" name="idService">
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let srv of services" [value]="srv.id">{{ srv.nom }}</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" type="button" (click)="create(etapeForm)">Enregistrer</button>
+      <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+    </div>
+  </form>
+  </div>
+</section>
+

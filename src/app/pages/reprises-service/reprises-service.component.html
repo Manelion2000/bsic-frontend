@@ -1,0 +1,98 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Gestion des absences</span>
+      <h1 class="page-title">Reprises de service</h1>
+      <p class="page-subtitle">Declare une reprise effective et suis sa validation hierarchique.</p>
+    </div>
+    <div class="header-actions">
+      <span class="chip" *ngIf="message">{{ message }}</span>
+      <button class="btn btn--light" (click)="reload()">Rafraichir</button>
+    </div>
+  </div>
+
+  <div class="card card--accent reprise-card">
+    <div class="section-heading">
+      <div>
+        <h2>Nouvelle declaration</h2>
+        <p>Le signataire est determine automatiquement selon votre hierarchie.</p>
+      </div>
+    </div>
+    <div class="identity-grid">
+      <div><span>Demandeur</span><strong>{{ currentUser?.nom }} {{ currentUser?.prenom }}</strong></div>
+      <div><span>Matricule</span><strong>{{ currentUser?.matricule || '-' }}</strong></div>
+      <div><span>Fonction</span><strong>{{ currentUser?.fonction || '-' }}</strong></div>
+    </div>
+    <div class="form-grid">
+      <label class="form-field form-field--wide">
+        Motif de l'absence
+        <textarea rows="3" [(ngModel)]="form.motifAbsence" name="motifAbsence" placeholder="Conge, mission, maladie..."></textarea>
+      </label>
+      <label class="form-field">Debut de l'absence<input type="date" [(ngModel)]="form.dateDebutConge" name="dateDebutConge" /></label>
+      <label class="form-field">Fin de l'absence<input type="date" [(ngModel)]="form.dateFinConge" name="dateFinConge" /></label>
+      <label class="form-field">Date de reprise<input type="date" [max]="today()" [(ngModel)]="form.dateReprise" name="dateReprise" /></label>
+    </div>
+    <div class="form-actions"><button class="btn btn--primary" (click)="createDemande()">Envoyer la declaration</button></div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-item"><span>Mes declarations</span><strong>{{ mesDemandes.length }}</strong></div>
+    <div class="summary-item summary-item--pending"><span>A valider</span><strong>{{ demandesAValider.length }}</strong></div>
+    <div class="summary-item summary-item--valid"><span>Validees</span><strong>{{ countValidees() }}</strong></div>
+  </div>
+
+  <div class="card list-card">
+    <div class="section-heading"><h2>Mes declarations</h2></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Absence</th><th>Reprise</th><th>Signataire</th><th>Statut</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let d of mesDemandes">
+            <td><strong>{{ d.motifAbsence }}</strong><small>{{ d.dateDebutConge }} au {{ d.dateFinConge }}</small></td>
+            <td>{{ d.dateReprise }}</td><td>{{ d.statutValidation === 'EN_ATTENTE' ? 'Selon circuit hierarchique' : (d.nomCompletSignataire || 'Non defini') }}</td>
+            <td><span class="badge" [class.badge--warning]="d.statutValidation === 'EN_ATTENTE'" [class.badge--success]="d.statutValidation === 'VALIDEE'" [class.badge--error]="d.statutValidation === 'REJETEE'">{{ d.statutValidation }}</span></td>
+            <td><button class="btn btn--light btn--small" (click)="ouvrirDetails(d)">Voir</button></td>
+          </tr>
+          <tr *ngIf="!mesDemandes.length"><td colspan="5" class="empty-state">{{ loading ? 'Chargement...' : 'Aucune declaration de reprise.' }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card list-card list-card--validation">
+    <div class="section-heading"><h2>Declarations a valider</h2><span class="badge badge--warning">{{ demandesAValider.length }} en attente</span></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Demandeur</th><th>Structure</th><th>Absence</th><th>Reprise</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let d of demandesAValider">
+            <td><strong>{{ d.nomCompletDemandeur }}</strong><small>{{ d.matriculeDemandeur }}</small></td>
+            <td>{{ d.nomServiceDemandeur || '-' }}<small>{{ d.nomDepartementDemandeur || '-' }}</small></td>
+            <td>{{ d.motifAbsence }}<small>{{ d.dateDebutConge }} au {{ d.dateFinConge }}</small></td>
+            <td>{{ d.dateReprise }}</td><td><button class="btn btn--primary btn--small" (click)="ouvrirDetails(d)">Traiter</button></td>
+          </tr>
+          <tr *ngIf="!demandesAValider.length"><td colspan="5" class="empty-state">Aucune declaration en attente de validation.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="details-overlay" *ngIf="demandeSelectionnee">
+    <div class="details-modal">
+      <div class="details-header"><div><span class="page-header__eyebrow">Declaration de reprise</span><h3>{{ demandeSelectionnee.nomCompletDemandeur }}</h3></div><button class="btn btn--light btn--small" (click)="fermerDetails()">Fermer</button></div>
+      <div class="details-grid">
+        <p><span>Demandeur</span><strong>{{ demandeSelectionnee.nomCompletDemandeur }}</strong></p>
+        <p><span>Structure</span><strong>{{ demandeSelectionnee.nomServiceDemandeur || '-' }} / {{ demandeSelectionnee.nomDepartementDemandeur || '-' }}</strong></p>
+        <p><span>Motif</span><strong>{{ demandeSelectionnee.motifAbsence }}</strong></p>
+        <p><span>Periode d'absence</span><strong>{{ demandeSelectionnee.dateDebutConge }} au {{ demandeSelectionnee.dateFinConge }}</strong></p>
+        <p><span>Date de reprise</span><strong>{{ demandeSelectionnee.dateReprise }}</strong></p>
+        <p><span>{{ demandeSelectionnee.statutValidation === 'EN_ATTENTE' ? 'Validation' : 'Signataire effectif' }}</span><strong>{{ demandeSelectionnee.statutValidation === 'EN_ATTENTE' ? 'Selon circuit hierarchique' : (demandeSelectionnee.nomCompletSignataire || '-') }}</strong></p>
+        <p><span>Statut</span><strong>{{ demandeSelectionnee.statutValidation }}</strong></p>
+        <p><span>Commentaire</span><strong>{{ demandeSelectionnee.commentaireValidation || '-' }}</strong></p>
+      </div>
+      <label class="form-field comment-field" *ngIf="canProcess(demandeSelectionnee)">Commentaire<textarea rows="3" [(ngModel)]="commentaire" name="commentaire" placeholder="Facultatif pour valider, obligatoire pour rejeter"></textarea></label>
+      <div class="details-actions" *ngIf="canProcess(demandeSelectionnee)"><button class="btn btn-validate" (click)="valider()">Valider et autoriser la reprise</button><button class="btn btn-reject" (click)="rejeter()">Rejeter</button></div>
+      <div class="details-actions" *ngIf="demandeSelectionnee.statutValidation === 'VALIDEE'"><button class="btn btn--light" (click)="attestation(demandeSelectionnee.id, true)">Visionner l'attestation</button><button class="btn btn--primary" (click)="attestation(demandeSelectionnee.id, false)">Telecharger l'attestation</button></div>
+    </div>
+  </div>
+</section>

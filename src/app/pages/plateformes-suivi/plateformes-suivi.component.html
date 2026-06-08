@@ -1,0 +1,136 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Audit</span>
+      <h1 class="page-title">Suivi plateformes</h1>
+      <p class="page-subtitle">Recherche detaillee par plateforme, personne, departement, statut et periode.</p>
+    </div>
+    <div class="header-actions">
+      <span class="chip" *ngIf="message">{{ message }}</span>
+      <button class="btn btn--light" (click)="reset()">Reinitialiser</button>
+      <button class="btn btn--primary" (click)="reload(0)">Filtrer</button>
+    </div>
+  </div>
+
+  <div class="card filters-card">
+    <label>
+      Plateforme
+      <select [(ngModel)]="filter.idPlateforme" name="idPlateforme">
+        <option value="">Toutes</option>
+        <option *ngFor="let plateforme of plateformes" [value]="plateforme.id">{{ plateforme.nom }}</option>
+      </select>
+    </label>
+    <label>
+      Type
+      <select [(ngModel)]="filter.typePlateforme" name="typePlateforme">
+        <option value="">Tous</option>
+        <option value="RESEAUX">RESEAUX</option>
+        <option value="CORE_BANKING">CORE_BANKING</option>
+      </select>
+    </label>
+    <label>
+      Departement
+      <select [(ngModel)]="filter.idDepartement" name="idDepartement">
+        <option value="">Tous</option>
+        <option *ngFor="let departement of departements" [value]="departement.id">{{ departement.nom }}</option>
+      </select>
+    </label>
+    <label>
+      Demandeur
+      <select [(ngModel)]="filter.idDemandeur" name="idDemandeur">
+        <option value="">Tous</option>
+        <option *ngFor="let user of users" [value]="user.id">{{ user.nom }} {{ user.prenom }} - {{ user.username }}</option>
+      </select>
+    </label>
+    <label>
+      Statut creation
+      <select [(ngModel)]="filter.statutCreation" name="statutCreation">
+        <option value="">Tous</option>
+        <option value="A_CREER">A_CREER</option>
+        <option value="EN_COURS_CREATION">EN_COURS_CREATION</option>
+        <option value="CREE">CREE</option>
+      </select>
+    </label>
+    <label>
+      Statut reinitialisation
+      <select [(ngModel)]="filter.statutReinitialisation" name="statutReinitialisation">
+        <option value="">Tous</option>
+        <option value="EN_COURS">EN_COURS</option>
+        <option value="VALIDEE">VALIDEE</option>
+        <option value="REJETEE">REJETEE</option>
+      </select>
+    </label>
+    <label>
+      Statut traitement
+      <select [(ngModel)]="filter.statutTraitement" name="statutTraitement">
+        <option value="">Tous</option>
+        <option value="A_TRAITER">A_TRAITER</option>
+        <option value="EN_COURS_TRAITEMENT">EN_COURS_TRAITEMENT</option>
+        <option value="TRAITEE">TRAITEE</option>
+      </select>
+    </label>
+    <label>
+      Date debut
+      <input type="date" [(ngModel)]="filter.dateDebut" name="dateDebut">
+    </label>
+    <label>
+      Date fin
+      <input type="date" [(ngModel)]="filter.dateFin" name="dateFin">
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="table-toolbar">
+      <strong>{{ totalElements }} resultat(s)</strong>
+      <div>
+        <button class="btn btn--small btn--light" (click)="prev()" [disabled]="page === 0">Precedent</button>
+        <span>Page {{ page + 1 }}</span>
+        <button class="btn btn--small btn--light" (click)="next()" [disabled]="(page + 1) * size >= totalElements">Suivant</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Demandeur</th>
+          <th>Departement</th>
+          <th>Plateforme</th>
+          <th>Creation</th>
+          <th>Cree par</th>
+          <th>Reinit.</th>
+          <th>Dernier traitement</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let row of rows">
+          <td>
+            <strong>{{ row.nomDemandeur || '-' }}</strong>
+            <small>{{ row.matriculeDemandeur || '-' }}</small>
+          </td>
+          <td>{{ row.departement || row.service || '-' }}</td>
+          <td>
+            <strong>{{ row.plateforme || '-' }}</strong>
+            <small>{{ row.typePlateforme || '-' }}</small>
+          </td>
+          <td>
+            <span class="badge">{{ row.statutCreation }}</span>
+            <small>{{ row.dateCreationCompte || row.dateDemandeCompte || '-' }}</small>
+          </td>
+          <td>{{ row.creePar || '-' }}</td>
+          <td>
+            <strong>{{ row.nombreReinitialisations || 0 }}</strong>
+            <small>{{ row.dernierStatutReinitialisation || '-' }}</small>
+          </td>
+          <td>
+            <strong>{{ row.dernierStatutTraitement || '-' }}</strong>
+            <small>{{ row.dernierTraitePar || '-' }}</small>
+          </td>
+        </tr>
+        <tr *ngIf="!rows.length">
+          <td colspan="7" class="empty-state">{{ loading ? 'Chargement...' : 'Aucune ligne ne correspond aux filtres.' }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

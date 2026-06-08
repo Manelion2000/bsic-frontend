@@ -1,0 +1,63 @@
+import { Routes } from '@angular/router';
+import { UsersComponent } from './pages/users/users.component';
+import { RolesComponent } from './pages/roles/roles.component';
+import { ProfilsComponent } from './pages/profils/profils.component';
+import { AnnuaireServicesComponent } from './pages/annuaire-services/annuaire-services.component';
+import { AnnuaireDepartementsComponent } from './pages/annuaire-departements/annuaire-departements.component';
+import { AnnuaireAgencesComponent } from './pages/annuaire-agences/annuaire-agences.component';
+import { AnnuaireEmployesComponent } from './pages/annuaire-employes/annuaire-employes.component';
+import { AnnuaireGlobalComponent } from './pages/annuaire-global/annuaire-global.component';
+import { HabilitationsPlateformesComponent } from './pages/habilitations-plateformes/habilitations-plateformes.component';
+import { HabilitationsFichesComponent } from './pages/habilitations-fiches/habilitations-fiches.component';
+import { HabilitationsValidationsComponent } from './pages/habilitations-validations/habilitations-validations.component';
+import { ReunionsComponent } from './pages/reunions/reunions.component';
+import { ReportingComponent } from './pages/reporting/reporting.component';
+import { LoginComponent } from './pages/login/login.component';
+import { BacircuitComponent } from './pages/bacircuit/bacircuit.component';
+import { BacircuitConfigComponent } from './pages/bacircuit-config/bacircuit-config.component';
+import { BacircuitWorkflowComponent } from './pages/bacircuit-workflow/bacircuit-workflow.component';
+import { HabilitationsWorkflowSimpleComponent } from './pages/habilitations-workflow/habilitations-workflow-simple.component';
+import { AutorisationSortiesComponent } from './pages/autorisation-sorties/autorisation-sorties.component';
+import { ReprisesServiceComponent } from './pages/reprises-service/reprises-service.component';
+import { HabilitationsComptesComponent } from './pages/habilitations-comptes/habilitations-comptes.component';
+import { ReinitialisationsComptesComponent } from './pages/reinitialisations-comptes/reinitialisations-comptes.component';
+import { PlateformesDashboardComponent } from './pages/plateformes-dashboard/plateformes-dashboard.component';
+import { PlateformesSuiviComponent } from './pages/plateformes-suivi/plateformes-suivi.component';
+import { AutorisationsStatsComponent } from './pages/autorisations-stats/autorisations-stats.component';
+import { AutorisationsSuiviComponent } from './pages/autorisations-suivi/autorisations-suivi.component';
+import { ReprisesStatsComponent } from './pages/reprises-stats/reprises-stats.component';
+import { ReprisesSuiviComponent } from './pages/reprises-suivi/reprises-suivi.component';
+
+export const routes: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'login' },
+  { path: 'login', component: LoginComponent },
+  { path: 'users', component: UsersComponent },
+  { path: 'roles', component: RolesComponent },
+  { path: 'profils', component: ProfilsComponent },
+  { path: 'annuaire/services', component: AnnuaireServicesComponent },
+  { path: 'annuaire/departements', component: AnnuaireDepartementsComponent },
+  { path: 'annuaire/agences', component: AnnuaireAgencesComponent },
+  { path: 'annuaire/employes', component: AnnuaireEmployesComponent },
+  { path: 'annuaire/annuaire', component: AnnuaireGlobalComponent },
+  { path: 'habilitations/plateformes', component: HabilitationsPlateformesComponent },
+  { path: 'habilitations/fiches', component: HabilitationsFichesComponent },
+  { path: 'habilitations/validations', component: HabilitationsValidationsComponent },
+  { path: 'habilitations/comptes', component: HabilitationsComptesComponent },
+  { path: 'habilitations/reinitialisations-comptes', component: ReinitialisationsComptesComponent },
+  { path: 'habilitations/statistiques-plateformes', component: PlateformesDashboardComponent },
+  { path: 'habilitations/suivi-plateformes', component: PlateformesSuiviComponent },
+  { path: 'habilitations-workflow', component: HabilitationsWorkflowSimpleComponent },
+  { path: 'bacircuit', component: BacircuitComponent },
+  { path: 'bacircuit-config', component: BacircuitConfigComponent },
+  { path: 'bacircuit-config/:id', component: BacircuitConfigComponent },
+  { path: 'bacircuit-workflow', component: BacircuitWorkflowComponent },
+  { path: 'autorisation-sorties', component: AutorisationSortiesComponent },
+  { path: 'reprises-service', component: ReprisesServiceComponent },
+  { path: 'reunions', component: ReunionsComponent },
+  { path: 'reporting', component: ReportingComponent },
+  { path: 'reporting/autorisations-statistiques', component: AutorisationsStatsComponent },
+  { path: 'reporting/autorisations-suivi', component: AutorisationsSuiviComponent },
+  { path: 'reporting/reprises-statistiques', component: ReprisesStatsComponent },
+  { path: 'reporting/reprises-suivi', component: ReprisesSuiviComponent },
+  { path: '**', redirectTo: 'login' }
+];

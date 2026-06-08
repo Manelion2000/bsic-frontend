@@ -1,0 +1,66 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Catalogue applicatif</span>
+      <h1 class="page-title">Plateformes</h1>
+      <p class="page-subtitle">Gestion des plateformes et des acces par role.</p>
+    </div>
+    <button class="btn btn--primary" (click)="openCreateForm()">Nouvelle plateforme</button>
+  </div>
+
+  <div class="card-grid">
+    <div class="card platform-card" *ngFor="let platform of plateformes" (click)="selectPlateforme(platform)">
+      <h3 class="platform-card__title">{{ platform.nom }}</h3>
+      <div class="pill-group">
+        <span class="pill">Code: {{ platform.code }}</span>
+        <!-- <span class="pill">Id: {{ platform.id }}</span> -->
+        <span class="pill">Libelle: {{ platform.nom }}</span>
+        <span class="pill">Type: {{ platform.typePlateforme || 'RESEAUX' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+  <form class="card card--accent crud-modal" #plateformeForm="ngForm" (click)="$event.stopPropagation()">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <span class="page-header__eyebrow">Parametrage</span>
+        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire plateforme</h2>
+        <p class="page-subtitle">{{ message || 'Creation d\'une plateforme.' }}</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Code
+        <input type="text" [(ngModel)]="form.code" name="code" required placeholder="PLT-CORE" />
+        <span class="badge badge--orange" *ngIf="submitted && plateformeForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Nom
+        <input type="text" [(ngModel)]="form.nom" name="nom" required placeholder="Core Banking" />
+        <span class="badge badge--orange" *ngIf="submitted && plateformeForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Circuit
+        <select [(ngModel)]="form.idCircuit" name="idCircuit">
+          <option value="">Aucun circuit</option>
+          <option *ngFor="let circuit of circuits" [value]="circuit.id">
+            {{ circuit.code }} - {{ circuit.libelle }}
+          </option>
+        </select>
+      </label>
+      <label class="form-field">
+        Type plateforme
+        <select [(ngModel)]="form.typePlateforme" name="typePlateforme" required>
+          <option value="RESEAUX">Reseaux</option>
+          <option value="CORE_BANKING">Core Banking</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" type="button" (click)="create(plateformeForm)">Enregistrer</button>
+      <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+    </div>
+  </form>
+  </div>
+</section>

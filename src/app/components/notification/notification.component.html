@@ -1,0 +1,32 @@
+<div class="notifications-container">
+  <ng-container *ngIf="notifications$ | async as notifications">
+    <div class="notifications-list">
+      <div 
+        *ngFor="let notification of notifications" 
+        class="notification"
+        [class]="getNotificationClass(notification.type)"
+        [@slideIn]>
+        
+        <div class="notification-icon" [innerHTML]="getNotificationIcon(notification.type)"></div>
+        
+        <div class="notification-content">
+          <div class="notification-title">{{ notification.title }}</div>
+          <div class="notification-message">{{ notification.message }}</div>
+        </div>
+        
+        <button class="notification-close" (click)="removeNotification(notification.id)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <div class="notifications-actions" *ngIf="notifications && notifications.length > 1">
+      <button class="clear-all-btn" (click)="clearAll()">
+        Tout effacer
+      </button>
+    </div>
+  </ng-container>
+</div>

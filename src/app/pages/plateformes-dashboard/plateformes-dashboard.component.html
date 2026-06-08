@@ -1,0 +1,102 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Statistiques</span>
+      <h1 class="page-title">Tableau de bord plateformes</h1>
+      <p class="page-subtitle">Vue consolidee des creations de comptes, reinitialisations et traitements par type de plateforme.</p>
+    </div>
+    <div class="header-actions">
+      <span class="chip" *ngIf="message">{{ message }}</span>
+      <button class="btn btn--light" (click)="reset()">Reinitialiser</button>
+      <button class="btn btn--primary" (click)="reload()">Actualiser</button>
+    </div>
+  </div>
+
+  <div class="card filters-card">
+    <label>
+      Plateforme
+      <select [(ngModel)]="filter.idPlateforme" name="idPlateforme">
+        <option value="">Toutes</option>
+        <option *ngFor="let plateforme of plateformes" [value]="plateforme.id">{{ plateforme.nom }}</option>
+      </select>
+    </label>
+    <label>
+      Type
+      <select [(ngModel)]="filter.typePlateforme" name="typePlateforme">
+        <option value="">Tous</option>
+        <option value="RESEAUX">RESEAUX</option>
+        <option value="CORE_BANKING">CORE_BANKING</option>
+      </select>
+    </label>
+    <label>
+      Departement
+      <select [(ngModel)]="filter.idDepartement" name="idDepartement">
+        <option value="">Tous</option>
+        <option *ngFor="let departement of departements" [value]="departement.id">{{ departement.nom }}</option>
+      </select>
+    </label>
+    <label>
+      Demandeur
+      <select [(ngModel)]="filter.idDemandeur" name="idDemandeur">
+        <option value="">Tous</option>
+        <option *ngFor="let user of users" [value]="user.id">{{ user.nom }} {{ user.prenom }} - {{ user.username }}</option>
+      </select>
+    </label>
+    <label>
+      Date debut
+      <input type="date" [(ngModel)]="filter.dateDebut" name="dateDebut">
+    </label>
+    <label>
+      Date fin
+      <input type="date" [(ngModel)]="filter.dateFin" name="dateFin">
+    </label>
+  </div>
+
+  <div class="kpi-grid" *ngIf="stats">
+    <div class="kpi-card"><span>Comptes</span><strong>{{ stats.totalComptes }}</strong></div>
+    <div class="kpi-card"><span>A creer</span><strong>{{ stats.comptesACreer }}</strong></div>
+    <div class="kpi-card"><span>En creation</span><strong>{{ stats.comptesEnCoursCreation }}</strong></div>
+    <div class="kpi-card"><span>Crees</span><strong>{{ stats.comptesCrees }}</strong></div>
+    <div class="kpi-card"><span>Reinitialisations</span><strong>{{ stats.totalReinitialisations }}</strong></div>
+    <div class="kpi-card"><span>Validees</span><strong>{{ stats.reinitialisationsValidees }}</strong></div>
+    <div class="kpi-card"><span>A traiter</span><strong>{{ stats.traitementsATraiter }}</strong></div>
+    <div class="kpi-card"><span>Traitees</span><strong>{{ stats.traitementsTraites }}</strong></div>
+  </div>
+
+  <div class="stats-grid" *ngIf="stats">
+    <div class="card stat-panel">
+      <h3>Par type de plateforme</h3>
+      <div class="bar-row" *ngFor="let item of stats.parTypePlateforme">
+        <span>{{ item.libelle }}</span>
+        <div><i [style.width.%]="((item.valeur || 0) / max(stats.parTypePlateforme)) * 100"></i></div>
+        <strong>{{ item.valeur }}</strong>
+      </div>
+    </div>
+    <div class="card stat-panel">
+      <h3>Top plateformes</h3>
+      <div class="bar-row" *ngFor="let item of stats.topPlateformes">
+        <span>{{ item.libelle }}</span>
+        <div><i [style.width.%]="((item.valeur || 0) / max(stats.topPlateformes)) * 100"></i></div>
+        <strong>{{ item.valeur }}</strong>
+      </div>
+    </div>
+    <div class="card stat-panel">
+      <h3>Par departement</h3>
+      <div class="bar-row" *ngFor="let item of stats.parDepartement">
+        <span>{{ item.libelle }}</span>
+        <div><i [style.width.%]="((item.valeur || 0) / max(stats.parDepartement)) * 100"></i></div>
+        <strong>{{ item.valeur }}</strong>
+      </div>
+    </div>
+    <div class="card stat-panel">
+      <h3>Agents traitement</h3>
+      <div class="bar-row" *ngFor="let item of stats.topTraiteurs">
+        <span>{{ item.libelle }}</span>
+        <div><i [style.width.%]="((item.valeur || 0) / max(stats.topTraiteurs)) * 100"></i></div>
+        <strong>{{ item.valeur }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">Chargement des statistiques...</div>
+</section>

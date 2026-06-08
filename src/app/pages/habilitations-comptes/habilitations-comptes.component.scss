@@ -1,0 +1,26 @@
+:host { display: block; }
+.header-actions, .details-header, .details-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.tabs { display: flex; flex-wrap: wrap; gap: .55rem; }
+.tab { border: 1px solid var(--bsic-border); background: var(--bsic-surface-2); color: var(--bsic-text); padding: .55rem .8rem; border-radius: var(--bsic-radius-md); font-weight: 700; cursor: pointer; }
+.tab.active { color: #fff; background: var(--bsic-primary); border-color: var(--bsic-primary-dark); }
+.comptes-card { position: relative; overflow: hidden; }
+.comptes-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, var(--bsic-primary), var(--bsic-green), var(--bsic-gold)); }
+.table-wrap { overflow-x: auto; }
+.table td strong, .table td small { display: block; }
+.table td small { color: var(--bsic-muted); margin-top: .2rem; }
+.empty-state { padding: 1.4rem !important; text-align: center; color: var(--bsic-muted); }
+.badge--info { color: #075985; background: #e0f2fe; border: 1px solid #bae6fd; }
+.details-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(11, 22, 38, .62); backdrop-filter: blur(8px); }
+.details-modal { width: min(760px, 94vw); max-height: 88vh; overflow: auto; padding: 1.1rem; background: #f8fbfe; border: 1px solid var(--bsic-border); border-radius: var(--bsic-radius-xl); box-shadow: var(--bsic-shadow-lg); }
+.details-header { padding-bottom: .8rem; border-bottom: 1px solid var(--bsic-border); }
+.details-header h3 { margin: 0; color: var(--bsic-ink); font-size: 1.08rem; }
+.details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin-top: 1rem; }
+.details-grid p { margin: 0; padding: .75rem; background: #fff; border: 1px solid var(--bsic-border); border-radius: var(--bsic-radius-md); }
+.details-grid span { display: block; color: var(--bsic-muted); font-size: .75rem; font-weight: 800; text-transform: uppercase; }
+.details-grid strong { display: block; margin-top: .2rem; color: var(--bsic-ink); }
+.comment-field { margin-top: 1rem; }
+.details-actions { justify-content: flex-start; margin-top: 1rem; flex-wrap: wrap; }
+@media (max-width: 760px) {
+  .header-actions, .details-header { align-items: stretch; flex-direction: column; }
+  .details-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,106 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Produits</h1>
+      <p class="page-subtitle">Catalogue des produits et services BSIC.</p>
+    </div>
+    <button class="btn btn--primary" (click)="openCreateForm()">Nouveau produit</button>
+  </div>
+
+  <div class="card">
+    <div class="form-grid">
+      <label class="form-field">
+        Recherche
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Nom, categorie..." />
+      </label>
+      <label class="form-field">
+        Taille page
+        <select [(ngModel)]="pageSize">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="8">8</option>
+          <option [ngValue]="15">15</option>
+        </select>
+      </label>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Categorie</th>
+          <th>Prix</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let produit of pagedProduits" (click)="selectProduct(produit)">
+          <td>{{ produit.name }}</td>
+          <td>{{ produit.nomCategorie }}</td>
+          <td>{{ produit.price }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="icon-btn" title="Update" aria-label="Update" (click)="selectProduct(produit); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+              <button class="icon-btn icon-btn--danger" title="Supprimer" aria-label="Supprimer" (click)="delete(produit); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="form-actions">
+      <button class="btn btn--light" (click)="prevPage()">Precedent</button>
+      <span class="chip">Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
+      <button class="btn btn--light" (click)="nextPage()">Suivant</button>
+    </div>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+  <form class="card card--accent crud-modal" #produitForm="ngForm" (click)="$event.stopPropagation()">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire produit</h2>
+        <p class="page-subtitle">{{ message || 'Configurer les details du produit.' }}</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Nom du produit
+        <input type="text" [(ngModel)]="form.name" name="name" required placeholder="Ex: Epargne Plus" />
+        <span class="badge badge--orange" *ngIf="submitted && produitForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Description
+        <textarea rows="3" [(ngModel)]="form.description" name="description" placeholder="Caracteristiques..."></textarea>
+      </label>
+      <label class="form-field">
+        Prix
+        <input type="number" [(ngModel)]="form.price" name="price" placeholder="15000" />
+      </label>
+      <label class="form-field">
+        Categorie
+        <select [(ngModel)]="form.idCategorie" name="idCategorie" required>
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.nom }}</option>
+        </select>
+        <span class="badge badge--orange" *ngIf="submitted && produitForm.controls['']?.invalid">Requis</span>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" type="button" (click)="create(produitForm)">Enregistrer</button>
+      <button class="btn btn--outline" type="button" (click)="update(produitForm)">Mettre a jour</button>
+      <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+    </div>
+  </form>
+  </div>
+</section>
+

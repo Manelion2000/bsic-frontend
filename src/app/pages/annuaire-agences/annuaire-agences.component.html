@@ -1,0 +1,119 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Agences</h1>
+      <p class="page-subtitle">Reseau d'agences et points de contact.</p>
+    </div>
+    <button class="btn btn--primary" (click)="openCreateForm()">Nouvelle agence</button>
+  </div>
+
+  <div class="card">
+    <div class="form-grid">
+      <label class="form-field">
+        Recherche
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Code, nom, adresse..." />
+      </label>
+      <label class="form-field">
+        Taille page
+        <select [(ngModel)]="pageSize">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="8">8</option>
+          <option [ngValue]="15">15</option>
+        </select>
+      </label>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Nom</th>
+          <th>Departement</th>
+          <th>Adresse</th>
+          <th>Telephone</th>
+          <th>Telephone 2</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let agence of pagedAgences" (click)="selectAgence(agence)">
+          <td>{{ agence.code }}</td>
+          <td>{{ agence.nom }}</td>
+          <td>{{ agence.nomDepartement || '-' }}</td>
+          <td>{{ agence.adresse }}</td>
+          <td>{{ agence.telephone || '-' }}</td>
+          <td>{{ agence.telephone1 || '-' }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="icon-btn" title="Update" aria-label="Update" (click)="selectAgence(agence); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+              <button class="icon-btn icon-btn--danger" disabled title="Supprimer indisponible" aria-label="Supprimer indisponible">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="form-actions">
+      <button class="btn btn--light" (click)="prevPage()">Precedent</button>
+      <span class="chip">Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
+      <button class="btn btn--light" (click)="nextPage()">Suivant</button>
+    </div>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+  <form class="card card--accent crud-modal" #agenceForm="ngForm" (click)="$event.stopPropagation()">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire agence</h2>
+        <p class="page-subtitle">{{ message || 'Enregistrer un nouveau point de contact.' }}</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Code
+        <input type="text" [(ngModel)]="form.code" name="code" required placeholder="AG-OUA" />
+        <span class="badge badge--orange" *ngIf="submitted && agenceForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Nom
+        <input type="text" [(ngModel)]="form.nom" name="nom" required placeholder="Agence Ouagadougou" />
+        <span class="badge badge--orange" *ngIf="submitted && agenceForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Departement
+        <select [(ngModel)]="form.idDepartement" name="idDepartement" required>
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let dep of departements" [value]="dep.id">{{ dep.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Adresse
+        <input type="text" [(ngModel)]="form.adresse" name="adresse" placeholder="Secteur, avenue" />
+      </label>
+      <label class="form-field">
+        Telephone
+        <input type="text" [(ngModel)]="form.telephone" name="telephone" placeholder="+226 25 00 00 00" />
+      </label>
+      <label class="form-field">
+        Telephone 2
+        <input type="text" [(ngModel)]="form.telephone1" name="telephone1" placeholder="+226 70 00 00 00" />
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" type="button" (click)="create(agenceForm)">Enregistrer</button>
+      <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+    </div>
+  </form>
+  </div>
+</section>
+

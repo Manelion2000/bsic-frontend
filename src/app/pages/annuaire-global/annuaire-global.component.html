@@ -1,0 +1,69 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Annuaire global</h1>
+      <p class="page-subtitle">Recherche transversale par service ou departement.</p>
+    </div>
+    <span class="chip">{{ message }}</span>
+  </div>
+
+  <div class="card">
+    <div class="form-grid">
+      <label class="form-field">
+        Departement
+        <select [(ngModel)]="filters.departementId">
+          <option value="">Tous</option>
+          <option *ngFor="let dep of departements" [value]="dep.id">{{ dep.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Service
+        <select [(ngModel)]="filters.serviceId">
+          <option value="">Tous</option>
+          <option *ngFor="let srv of services" [value]="srv.id">{{ srv.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Agence
+        <select [(ngModel)]="filters.agenceId">
+          <option value="">Toutes</option>
+          <option *ngFor="let agence of filteredAgences" [value]="agence.id">{{ agence.nom }}</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" (click)="load()">Rechercher</button>
+      <button class="btn btn--outline" (click)="reset()">Reinitialiser</button>
+    </div>
+  </div>
+
+  <div class="card" *ngFor="let dep of annuaire">
+    <div class="soft-panel">
+      <div style="font-weight: 700; margin-bottom: 0.6rem;">{{ dep.nom }}</div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Prenom</th>
+            <th>Fonction</th>
+            <th>Service</th>
+            <th>Agence</th>
+            <th>Poste</th>
+            <th>Telephone</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let agent of dep.agents">
+            <td>{{ agent.nom }}</td>
+            <td>{{ agent.prenom }}</td>
+            <td>{{ agent.fonction }}</td>
+            <td>{{ agent.nomService }}</td>
+            <td>{{ agent.nomAgence }}</td>
+            <td>{{ agent.numeroPoste }}</td>
+            <td>{{ agent.telephoneSecondaire }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

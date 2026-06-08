@@ -1,0 +1,226 @@
+<div class="bacircuit-page">
+  <div class="page-header card">
+    <div class="page-header__content">
+      <span class="page-header__eyebrow">Administration des habilitations</span>
+      <h1 class="page-header__title">Circuits de Validation</h1>
+      <p class="page-header__subtitle">Configurez, liez et pilotez vos circuits avec une vue operationnelle centralisee.</p>
+      <div class="header-metrics">
+        <div class="metric-chip">
+          <span class="metric-chip__label">Total</span>
+          <span class="metric-chip__value">{{ circuits.length }}</span>
+        </div>
+        <div class="metric-chip">
+          <span class="metric-chip__label">Actifs</span>
+          <span class="metric-chip__value">{{ activeCircuitsCount }}</span>
+        </div>
+        <div class="metric-chip">
+          <span class="metric-chip__label">Filtres</span>
+          <span class="metric-chip__value">{{ filteredCircuits.length }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn btn--primary" (click)="goToCreateCircuit()">
+        Nouveau circuit
+      </button>
+      <button class="btn btn--outline" (click)="showLinkForm = !showLinkForm">
+        Lier Circuit/Plateforme
+      </button>
+      <button class="btn btn--outline" (click)="goToWorkflow()">
+        Workflow
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-section">
+    <div class="filters-section__head">
+      <h3>Recherche rapide</h3>
+      <p>Affinez l'affichage des circuits par nom ou plateforme.</p>
+    </div>
+    <div class="filters-grid">
+      <div class="form-field">
+        <input type="text" class="form-field__input"
+               [(ngModel)]="searchTerm"
+               placeholder="Rechercher un circuit..."
+               name="search">
+      </div>
+      <div class="form-field">
+        <select class="form-field__input" [(ngModel)]="selectedPlateforme" name="plateforme">
+          <option value="">Toutes les plateformes</option>
+          <option *ngFor="let plateforme of plateformes" [value]="plateforme.id">
+            {{ plateforme.nom }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="create-section" *ngIf="showLinkForm">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Associer Circuit et Plateforme</h3>
+        <p class="card-subtitle">Liaison independante apres creation des references</p>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-field__label">Plateforme *</label>
+            <select class="form-field__input" [(ngModel)]="linkForm.plateformeId" name="linkPlateformeId">
+              <option value="">Selectionner une plateforme</option>
+              <option *ngFor="let p of plateformes" [value]="p.id">{{ p.nom }}</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-field__label">Circuit *</label>
+            <select class="form-field__input" [(ngModel)]="linkForm.circuitId" name="linkCircuitId">
+              <option value="">Selectionner un circuit</option>
+              <option *ngFor="let c of circuits" [value]="c.id">{{ c.nomCircuit }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn--outline" (click)="showLinkForm = false">Annuler</button>
+          <button type="button" class="btn btn--primary" [disabled]="loading" (click)="assignCircuitToPlateforme()">Assigner</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="create-section" *ngIf="showCreateForm">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Creer un Nouveau Circuit</h3>
+        <p class="card-subtitle">Creation independante de la plateforme</p>
+      </div>
+      <div class="card-body">
+        <form class="form" (ngSubmit)="createCircuit()">
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-field__label">Nom du Circuit *</label>
+              <input type="text" class="form-field__input"
+                     [(ngModel)]="circuitForm.nomCircuit"
+                     name="nomCircuit"
+                     placeholder="Ex: Circuit Standard DIT-DRH-DGA-DG"
+                     required>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="form-field__label">Description</label>
+            <textarea class="form-field__input"
+                      [(ngModel)]="circuitForm.description"
+                      name="description"
+                      rows="3"
+                      placeholder="Description du circuit de validation..."></textarea>
+          </div>
+
+          <div class="etapes-selection">
+            <h4 class="section-title">Directions/Departements validateurs</h4>
+            <div class="etapes-grid">
+              <div class="etape-card"
+                   *ngFor="let dep of departements"
+                   [class.etape-card--selected]="circuitForm.etapesIds.includes(dep.id!)"
+                   (click)="toggleEtapeSelection(dep.id!)">
+                <div class="etape-card__content">
+                  <div class="etape-info">
+                    <h5 class="etape-title">{{ dep.nom }}</h5>
+                    <span class="etape-type">DEPARTEMENT</span>
+                    <span class="etape-fonction" *ngIf="dep.code">{{ dep.code }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="order-panel" *ngIf="selectedDepartementsOrdered.length > 0">
+            <h4 class="section-title">Ordre de validation</h4>
+            <div class="order-list">
+              <div class="order-item" *ngFor="let dep of selectedDepartementsOrdered; let i = index">
+                <div class="order-index">{{ i + 1 }}</div>
+                <div class="order-label">{{ dep.nom }}</div>
+                <div class="order-actions">
+                  <button type="button" class="btn btn--ghost btn--small" (click)="moveEtapeUp(i)" [disabled]="i === 0">Monter</button>
+                  <button type="button" class="btn btn--ghost btn--small" (click)="moveEtapeDown(i)" [disabled]="i === selectedDepartementsOrdered.length - 1">Descendre</button>
+                  <button type="button" class="btn btn--ghost btn--small btn--danger" (click)="removeEtapeFromOrder(dep.id)">Retirer</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn--outline" (click)="resetForm()">Annuler</button>
+            <button type="submit" class="btn btn--primary" [disabled]="loading">
+              {{ loading ? 'Creation...' : 'Creer le circuit' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="circuits-list">
+    <div class="cards-grid">
+      <div class="card circuit-card"
+           *ngFor="let circuit of filteredCircuits"
+           [ngClass]="'circuit-card--' + circuit.statut.toLowerCase()">
+        <div class="card-header">
+          <div class="circuit-header">
+            <div class="circuit-info">
+              <h3 class="circuit-title">{{ circuit.nomCircuit }}</h3>
+              <p class="circuit-subtitle">{{ circuit.plateformeNom || 'Non assigne a une plateforme' }}</p>
+            </div>
+            <div class="circuit-badges">
+              <span class="badge" [ngClass]="getStatutClass(circuit.statut)">{{ circuit.statut }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="circuit-details">
+            <div class="detail-item">
+              <span class="detail-label">Etapes:</span>
+              <span class="detail-value">{{ getEtapeCount(circuit) }} etapes</span>
+            </div>
+            <div class="detail-item" *ngIf="circuit.description">
+              <span class="detail-label">Description:</span>
+              <span class="detail-value">{{ circuit.description }}</span>
+            </div>
+          </div>
+          <div class="circuit-etapes" *ngIf="circuit.etapes.length > 0">
+            <h4 class="etapes-title">Etapes de validation</h4>
+            <div class="etapes-list">
+              <div class="etape-item" *ngFor="let etape of circuit.etapes; let i = index">
+                <div class="etape-ordre">{{ i + 1 }}</div>
+                <div class="etape-content">
+                  <span class="etape-name">{{ getEtapeTargetLabel(etape) }}</span>
+                  <span class="etape-type">{{ etape.type }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="circuit-actions">
+            <button class="btn btn--ghost btn--small" (click)="viewCircuitDetails(circuit.id!)" title="Voir les details">Voir</button>
+            <button class="btn btn--primary btn--small" (click)="configureCircuit(circuit.id!)" title="Configurer">Configurer</button>
+            <button class="btn btn--ghost btn--small" (click)="toggleCircuitStatus(circuit)" title="Activer/Desactiver">Statut</button>
+            <button class="btn btn--ghost btn--small btn--danger" (click)="deleteCircuit(circuit)" title="Supprimer">Supprimer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="filteredCircuits.length === 0 && !loading">
+      <h3 class="empty-state__title">Aucun circuit trouve</h3>
+      <p class="empty-state__text">
+        {{ searchTerm || selectedPlateforme ? 'Aucun circuit ne correspond a vos criteres.' : 'Commencez par creer votre premier circuit.' }}
+      </p>
+      <button class="btn btn--primary" (click)="showCreateForm = true" *ngIf="!searchTerm && !selectedPlateforme">
+        Creer un circuit
+      </button>
+    </div>
+  </div>
+
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="loading-spinner"></div>
+  </div>
+</div>

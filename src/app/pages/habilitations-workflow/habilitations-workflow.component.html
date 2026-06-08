@@ -1,0 +1,330 @@
+<div class="workflow-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-header__content">
+      <h1 class="page-header__title">Workflow d'Habilitation</h1>
+      <p class="page-header__subtitle">Gestion complète du circuit de validation des habilitations</p>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn btn--outline" (click)="goToEtapes()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="m22 21-3-3 3-3"/>
+        </svg>
+        Étapes
+      </button>
+      <button class="btn btn--outline" (click)="goToPlateformes()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        Plateformes
+      </button>
+      <button class="btn btn--outline" (click)="goToFiches()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        Fiches
+      </button>
+    </div>
+  </div>
+
+  <!-- Mode création de fiche -->
+  <div class="create-section" *ngIf="showCreateForm">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Nouvelle Fiche d'Habilitation</h3>
+        <p class="card-subtitle">Créer une nouvelle demande d'habilitation avec workflow automatique</p>
+      </div>
+      <div class="card-body">
+        <form #ficheFormRef="ngForm" (ngSubmit)="createFiche(ficheFormRef)" class="form">
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-field__label">Employé *</label>
+              <select class="form-field__input" [(ngModel)]="ficheForm.idEmploye" name="idEmploye" required>
+                <option value="">Sélectionner un employé</option>
+                <!-- Options à charger depuis l'annuaire -->
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-field__label">Plateforme/Rôle *</label>
+              <select class="form-field__input" [(ngModel)]="ficheForm.idPlateformeRole" name="idPlateformeRole" required>
+                <option value="">Sélectionner un rôle de plateforme</option>
+                <!-- Options à charger depuis les rôles de plateforme -->
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-field__label">Priorité</label>
+              <select class="form-field__input" [(ngModel)]="ficheForm.priorite" name="priorite">
+                <option value="BASSE">Basse</option>
+                <option value="NORMALE">Normale</option>
+                <option value="HAUTE">Haute</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-field__label">Motif</label>
+              <textarea class="form-field__input" [(ngModel)]="ficheForm.motif" name="motif" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn--outline" (click)="ficheFormRef.resetForm()">
+              Annuler
+            </button>
+            <button type="submit" class="btn btn--primary" [disabled]="loading || submitted">
+              {{ loading ? 'Création...' : 'Créer la fiche' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Configuration du circuit -->
+  <div class="circuit-config-section" *ngIf="showCircuitConfig">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Configuration du Circuit de Validation</h3>
+        <p class="card-subtitle">Définir l'ordre des étapes de validation pour une plateforme</p>
+      </div>
+      <div class="card-body">
+        <form class="form">
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-field__label">Plateforme *</label>
+              <select class="form-field__input" [(ngModel)]="circuitForm.plateformeId" 
+                      name="plateformeId" (change)="loadCircuitConfig()" required>
+                <option value="">Sélectionner une plateforme</option>
+                <!-- Options à charger -->
+              </select>
+            </div>
+          </div>
+          
+          <!-- Étapes disponibles -->
+          <div class="etapes-selection" *ngIf="config$ | async as config">
+            <h4 class="section-title">Étapes disponibles</h4>
+            <div class="etapes-list">
+              <div class="etape-item" 
+                   *ngFor="let etape of config.etapes" 
+                   [class.etape-item--selected]="circuitForm.etapesIds.includes(etape.id!)"
+                   (click)="toggleEtapeSelection(etape.id!)">
+                <div class="etape-info">
+                  <h5 class="etape-title">{{ etape.libelle }}</h5>
+                  <span class="etape-type">{{ etape.type }}</span>
+                  <span class="etape-fonction" *ngIf="etape.fonctionRequise">{{ etape.fonctionRequise }}</span>
+                </div>
+                <div class="etape-actions">
+                  <div class="drag-handle">⋮⋮</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn--outline" (click)="showCircuitConfig = false">
+              Annuler
+            </button>
+            <button type="button" class="btn btn--primary" 
+                    [disabled]="loading || circuitForm.etapesIds.length === 0"
+                    (click)="configurerCircuit()">
+              {{ loading ? 'Configuration...' : 'Configurer le circuit' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visualisation du workflow -->
+  <div class="workflow-view" *ngIf="workflow$ | async as workflow">
+    <!-- Informations de la fiche -->
+    <div class="fiche-info card">
+      <div class="card-header">
+        <div class="fiche-header">
+          <div class="fiche-titles">
+            <h3 class="card-title">{{ workflow.fiche.nomCompletEmploye }}</h3>
+            <p class="card-subtitle">{{ workflow.fiche.nomPlateforme }} - {{ workflow.fiche.nomRole }}</p>
+          </div>
+          <div class="fiche-badges">
+            <span class="badge" [class]="getStatutClass(workflow.statutGlobal)">
+              {{ workflow.statutGlobal }}
+            </span>
+            <span class="badge" [class]="getPriorityClass(workflow.fiche.priorite)">
+              {{ workflow.fiche.priorite }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="fiche-details">
+          <div class="detail-item">
+            <span class="detail-label">Service:</span>
+            <span class="detail-value">{{ workflow.fiche.nomServiceEmploye || '-' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Département:</span>
+            <span class="detail-value">{{ workflow.fiche.nomDepartementEmploye || '-' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Motif:</span>
+            <span class="detail-value">{{ workflow.fiche.motif || '-' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Date de création:</span>
+            <span class="detail-value">{{ workflow.fiche.createdDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barre de progression -->
+    <div class="progress-section card">
+      <div class="card-header">
+        <h4 class="card-title">Progression du Workflow</h4>
+        <span class="progress-percentage">{{ workflow.progress | number:'1.0-0' }}%</span>
+      </div>
+      <div class="card-body">
+        <div class="progress-bar">
+          <div class="progress-fill" 
+               [class]="getProgressColor(workflow.progress)"
+               [style.width.%]="workflow.progress"></div>
+        </div>
+        <div class="progress-steps">
+          <div class="progress-step" 
+               *ngFor="let etape of workflow.etapes; let i = index"
+               [class]="getEtapeClass(etape)"
+               [style.left.%]="(i / (workflow.etapes.length - 1)) * 100">
+            <div class="step-indicator">{{ i + 1 }}</div>
+            <div class="step-tooltip">
+              <strong>{{ etape.libelle }}</strong><br>
+              {{ etape.targetName }}<br>
+              <small>{{ etape.status }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Détail des étapes -->
+    <div class="etapes-section card">
+      <div class="card-header">
+        <h4 class="card-title">Étapes de Validation</h4>
+      </div>
+      <div class="card-body">
+        <div class="etapes-timeline">
+          <div class="etape-timeline-item" 
+               *ngFor="let etape of workflow.etapes; let i = index"
+               [class]="getEtapeClass(etape)">
+            <div class="etape-marker">
+              <div class="marker-dot"></div>
+              <div class="marker-line" *ngIf="i < workflow.etapes.length - 1"></div>
+            </div>
+            <div class="etape-content">
+              <div class="etape-header">
+                <div class="etape-info">
+                  <h5 class="etape-title">Étape {{ etape.ordre }}: {{ etape.libelle }}</h5>
+                  <span class="etape-type">{{ etape.type }}</span>
+                </div>
+                <div class="etape-status">
+                  <span class="badge" [class]="getStatutClass(etape.status)">
+                    {{ etape.status }}
+                  </span>
+                </div>
+              </div>
+              
+              <div class="etape-details">
+                <div class="detail-row" *ngIf="etape.targetName">
+                  <span class="detail-label">Cible:</span>
+                  <span class="detail-value">{{ etape.targetName }}</span>
+                </div>
+                <div class="detail-row" *ngIf="etape.validator">
+                  <span class="detail-label">Validateur:</span>
+                  <span class="detail-value">{{ etape.validator.nomComplet }}</span>
+                </div>
+                <div class="detail-row" *ngIf="etape.dateValidation">
+                  <span class="detail-label">Date:</span>
+                  <span class="detail-value">{{ etape.dateValidation | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+                <div class="detail-row" *ngIf="etape.commentaire">
+                  <span class="detail-label">Commentaire:</span>
+                  <span class="detail-value">{{ etape.commentaire }}</span>
+                </div>
+              </div>
+
+              <div class="etape-actions" *ngIf="etape.canValidate">
+                <button class="btn btn--success btn--small" 
+                        (click)="openValidationModal(etape, 'VALIDER')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Valider
+                </button>
+                <button class="btn btn--danger btn--small" 
+                        (click)="openValidationModal(etape, 'REJETER')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                  Rejeter
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de validation -->
+  <div class="modal-overlay" *ngIf="showValidationModal" (click)="closeValidationModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          {{ validationForm.action === 'VALIDER' ? 'Valider' : 'Rejeter' }} l'étape
+        </h3>
+        <button class="modal-close" (click)="closeValidationModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="etape-summary" *ngIf="selectedEtape">
+          <h4>{{ selectedEtape.libelle }}</h4>
+          <p>{{ selectedEtape.targetName }}</p>
+        </div>
+        
+        <form class="form">
+          <div class="form-field">
+            <label class="form-field__label">
+              {{ validationForm.action === 'VALIDER' ? 'Commentaire de validation (optionnel)' : 'Motif du rejet (obligatoire)' }}
+            </label>
+            <textarea class="form-field__input" 
+                      [(ngModel)]="validationForm.commentaire" 
+                      name="commentaire" 
+                      rows="4"
+                      [required]="validationForm.action === 'REJETER'">
+            </textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--outline" (click)="closeValidationModal()">
+          Annuler
+        </button>
+        <button class="btn" 
+                [class]="validationForm.action === 'VALIDER' ? 'btn--success' : 'btn--danger'"
+                [disabled]="loading || (validationForm.action === 'REJETER' && !validationForm.commentaire)"
+                (click)="validerEtape()">
+          {{ loading ? 'Traitement...' : (validationForm.action === 'VALIDER' ? 'Valider' : 'Rejeter') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

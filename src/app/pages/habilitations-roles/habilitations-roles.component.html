@@ -1,0 +1,89 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Habilitations</span>
+      <h1 class="page-title">Plateforme roles</h1>
+      <p class="page-subtitle">Associer les roles aux plateformes et niveaux d'acces.</p>
+    </div>
+    <button class="btn btn--primary" (click)="openCreateForm()">Nouvelle association</button>
+  </div>
+
+  <div class="card workspace-panel">
+    <div class="form-grid">
+      <label class="form-field">
+        Plateforme
+        <select [(ngModel)]="selectedPlateformeId" (change)="loadRoles()">
+          <option value="">Selectionner</option>
+          <option *ngFor="let p of plateformes" [value]="p.id">{{ p.nom }}</option>
+        </select>
+      </label>
+    </div>
+    <table class="table" style="margin-top: 1rem;">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Niveau</th>
+          <th>Plateforme</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let pr of plateformeRoles" (click)="selectRole(pr)">
+          <td>{{ pr.nom }}</td>
+          <td><span class="chip chip--small access-chip">{{ pr.niveauAcces }}</span></td>
+          <td><span class="pill">{{ pr.nomPlateforme }}</span></td>
+          <td>
+            <div class="table-actions">
+              <button class="icon-btn" title="Update" aria-label="Update" (click)="selectRole(pr); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+              <button class="icon-btn icon-btn--danger" disabled title="Supprimer indisponible" aria-label="Supprimer indisponible">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+  <div class="card card--accent crud-modal" (click)="$event.stopPropagation()">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <span class="page-header__eyebrow">Parametrage</span>
+        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire plateforme-role</h2>
+        <p class="page-subtitle">{{ message || 'Parametrer les acces par plateforme.' }}</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Nom
+        <input type="text" [(ngModel)]="form.nom" placeholder="Agent" />
+      </label>
+      <label class="form-field">
+        Niveau d'acces
+        <input type="text" [(ngModel)]="form.niveauAcces" placeholder="Complet" />
+      </label>
+      <label class="form-field">
+        Plateforme
+        <select [(ngModel)]="form.idPlateforme">
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let p of plateformes" [value]="p.id">{{ p.nom }}</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" (click)="create()">Enregistrer</button>
+      <button class="btn btn--light" (click)="closeFormModal()">Annuler</button>
+    </div>
+  </div>
+  </div>
+</section>

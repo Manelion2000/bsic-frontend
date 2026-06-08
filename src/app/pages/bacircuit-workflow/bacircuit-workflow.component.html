@@ -1,0 +1,315 @@
+<div class="bacircuit-workflow-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-header__content">
+      <div class="breadcrumb">
+        <button class="breadcrumb-link" (click)="goToCircuits()">← Circuits</button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Workflow</span>
+      </div>
+      <h1 class="page-header__title">Workflow de Mise en Place des Circuits</h1>
+      <p class="page-header__subtitle">Guide étape par étape pour configurer vos circuits de validation</p>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn btn--primary" (click)="showTemplateSelector = !showTemplateSelector">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Nouveau Workflow
+      </button>
+    </div>
+  </div>
+
+  <!-- Template Selector -->
+  <div class="template-selector-overlay" *ngIf="showTemplateSelector" (click)="showTemplateSelector = false">
+    <div class="template-selector-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Choisir un Template de Workflow</h3>
+        <button class="modal-close" (click)="showTemplateSelector = false">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="templates-grid">
+          <div class="template-card" 
+               *ngFor="let template of templates" 
+               (click)="selectTemplate(template)">
+            <div class="template-header">
+              <div class="template-info">
+                <h4 class="template-name">{{ template.nom }}</h4>
+                <p class="template-description">{{ template.description }}</p>
+              </div>
+              <div class="template-meta">
+                <span class="complexity-badge" [class]="getComplexityClass(template.complexite)">
+                  {{ template.complexite }}
+                </span>
+                <span class="duration">{{ template.dureeEstimee }}</span>
+              </div>
+            </div>
+            
+            <div class="template-stats">
+              <div class="stat-item">
+                <span class="stat-label">Popularité</span>
+                <div class="popularity-bar">
+                  <div class="popularity-fill" [style.width.%]="template.popularite"></div>
+                </div>
+                <span class="stat-value">{{ template.popularite }}%</span>
+              </div>
+            </div>
+
+            <div class="template-tags">
+              <span class="tag" *ngFor="let tag of template.tags">{{ tag }}</span>
+            </div>
+
+            <div class="template-steps-preview">
+              <h5>Étapes principales</h5>
+              <div class="steps-list">
+                <div class="step-preview" *ngFor="let step of template.steps.slice(0, 3)">
+                  <div class="step-icon" [innerHTML]="getIconSvg(step.icon)"></div>
+                  <div class="step-info">
+                    <span class="step-title">{{ step.title }}</span>
+                    <span class="step-time">{{ step.estimatedTime }}</span>
+                  </div>
+                </div>
+                <div class="more-steps" *ngIf="template.steps.length > 3">
+                  +{{ template.steps.length - 3 }} autres étapes
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Workflow Form -->
+  <div class="new-workflow-form" *ngIf="showNewWorkflowForm">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Créer un Nouveau Workflow</h3>
+        <p class="card-subtitle">Configurer votre circuit de validation</p>
+      </div>
+      <div class="card-body">
+        <form class="form" (ngSubmit)="createWorkflow()">
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-field__label">Nom du Circuit *</label>
+              <input type="text" class="form-field__input" 
+                     [(ngModel)]="workflowForm.nomCircuit" 
+                     name="nomCircuit" 
+                     placeholder="Ex: Circuit Standard Windows" 
+                     required>
+            </div>
+            <div class="form-field">
+              <label class="form-field__label">Plateforme *</label>
+              <select class="form-field__input" 
+                      [(ngModel)]="workflowForm.plateformeId" 
+                      name="plateformeId" 
+                      required>
+                <option value="">Sélectionner une plateforme</option>
+                <option *ngFor="let plateforme of plateformes" [value]="plateforme.id">
+                  {{ plateforme.nom }}
+                </option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-field" *ngIf="selectedTemplate">
+            <label class="form-field__label">Template sélectionné</label>
+            <div class="selected-template">
+              <strong>{{ selectedTemplate.nom }}</strong> - {{ selectedTemplate.description }}
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="form-field__label">Description</label>
+            <textarea class="form-field__input" 
+                      [(ngModel)]="workflowForm.description" 
+                      name="description" 
+                      rows="3"
+                      placeholder="Description du workflow..."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn--outline" (click)="resetForm()">
+              Annuler
+            </button>
+            <button type="submit" class="btn btn--primary">
+              Démarrer le Workflow
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Workflows -->
+  <div class="workflows-section">
+    <div class="section-header">
+      <h2 class="section-title">Workflows Actifs</h2>
+      <div class="section-stats">
+        <span class="stat">{{ workflows.length }} workflow(s) en cours</span>
+      </div>
+    </div>
+
+    <div class="workflows-grid">
+      <div class="workflow-card" 
+           *ngFor="let workflow of workflows" 
+           [class]="'workflow-card--' + (workflow.progress === 100 ? 'completed' : 'active')">
+        <div class="card-header">
+          <div class="workflow-header">
+            <div class="workflow-info">
+              <h3 class="workflow-title">{{ workflow.nomCircuit }}</h3>
+              <p class="workflow-subtitle">{{ workflow.plateformeNom }}</p>
+            </div>
+            <div class="workflow-progress">
+              <div class="progress-circle">
+                <svg viewBox="0 0 36 36">
+                  <path class="progress-bg"
+                        d="M18 2.0845
+                           a 15.9155 15.9155 0 0 1 0 31.831
+                           a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        stroke="var(--color-gray-200)"
+                        stroke-width="3"/>
+                  <path class="progress-fill"
+                        d="M18 2.0845
+                           a 15.9155 15.9155 0 0 1 0 31.831
+                           a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        stroke="var(--color-primary-500)"
+                        stroke-width="3"
+                        [attr.stroke-dasharray]="workflow.progress + ', 100'"/>
+                </svg>
+                <span class="progress-text">{{ workflow.progress | number:'1.0-0' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <!-- Progress Bar -->
+          <div class="progress-section">
+            <div class="progress-bar">
+              <div class="progress-fill" 
+                   [style.width.%]="workflow.progress"
+                   [class]="workflow.progress === 100 ? 'progress--success' : 'progress--active'"></div>
+            </div>
+            <div class="progress-info">
+              <span class="progress-text">Étape {{ workflow.currentStep + 1 }} / {{ workflow.steps.length }}</span>
+              <span class="progress-time">{{ workflow.estimatedTotalTime }}</span>
+            </div>
+          </div>
+
+          <!-- Current Step -->
+          <div class="current-step" *ngIf="workflow.progress < 100 && workflow.steps.length > 0">
+            <h4 class="current-step-title">Étape en cours</h4>
+            <div class="step-item current">
+              <div class="step-icon" [innerHTML]="getIconSvg(workflow.steps[workflow.currentStep].icon)"></div>
+              <div class="step-content">
+                <h5 class="step-title">{{ workflow.steps[workflow.currentStep].title }}</h5>
+                <p class="step-description">{{ workflow.steps[workflow.currentStep].description }}</p>
+                <div class="step-meta">
+                  <span class="step-time">{{ workflow.steps[workflow.currentStep].estimatedTime }}</span>
+                  <span class="step-action">{{ workflow.steps[workflow.currentStep].action }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Steps Overview -->
+          <div class="steps-overview">
+            <h4 class="steps-title">Progression</h4>
+            <div class="steps-timeline">
+              <div class="timeline-step" 
+                   *ngFor="let step of workflow.steps; let i = index"
+                   [class]="getStatusClass(step.status)"
+                   (click)="workflow.progress < 100 && i <= workflow.currentStep ? executeStep(step) : null">
+                <div class="timeline-marker">
+                  <div class="marker-dot"></div>
+                  <div class="marker-line" *ngIf="i < workflow.steps.length - 1"></div>
+                </div>
+                <div class="timeline-content">
+                  <h5 class="timeline-title">{{ step.title }}</h5>
+                  <p class="timeline-description">{{ step.description }}</p>
+                  <div class="timeline-meta">
+                    <span class="timeline-time">{{ step.estimatedTime }}</span>
+                    <span class="timeline-status" *ngIf="step.completedAt">
+                      Terminé le {{ step.completedAt | date:'dd/MM/yyyy HH:mm' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <div class="workflow-actions">
+            <button class="btn btn--primary" 
+                    *ngIf="workflow.progress < 100"
+                    (click)="continueWorkflow(workflow)">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              Continuer
+            </button>
+            
+            <button class="btn btn--outline" 
+                    (click)="duplicateWorkflow(workflow)">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              Dupliquer
+            </button>
+            
+            <button class="btn btn--outline" 
+                    *ngIf="workflow.progress < 100"
+                    (click)="pauseWorkflow(workflow)">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="4" width="4" height="16"/>
+                <rect x="14" y="4" width="4" height="16"/>
+              </svg>
+              Pause
+            </button>
+            
+            <button class="btn btn--outline btn--danger" 
+                    (click)="deleteWorkflow(workflow)">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              Supprimer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="workflows.length === 0 && !loading">
+      <div class="empty-state__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </div>
+      <h3 class="empty-state__title">Aucun workflow actif</h3>
+      <p class="empty-state__text">Commencez par créer votre premier workflow de mise en place de circuit</p>
+      <button class="btn btn--primary" (click)="showTemplateSelector = true">
+        Créer un workflow
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="loading-spinner"></div>
+  </div>
+</div>

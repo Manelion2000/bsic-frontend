@@ -1,0 +1,412 @@
+<div class="users-page">
+  <div class="users-shell">
+    <div class="users-hero">
+      <div class="users-hero__content">
+        <span class="page-header__eyebrow">Administration des acces</span>
+        <h1 class="page-header__title">Gestion des utilisateurs</h1>
+        <p class="page-header__subtitle">Piloter comptes, rattachements et droits BSIC.</p>
+      </div>
+      <button class="btn btn--primary users-hero__action" (click)="startCreateUser()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M19 8v6"/>
+          <path d="M22 11h-6"/>
+        </svg>
+        Nouvel utilisateur
+      </button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card stat-card--total">
+        <div class="stat-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-card__value">{{ users.length }}</div>
+          <div class="stat-card__label">Total utilisateurs</div>
+        </div>
+      </div>
+      <div class="stat-card stat-card--active">
+        <div class="stat-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-card__value">{{ activeUsersCount }}</div>
+          <div class="stat-card__label">Actifs</div>
+        </div>
+      </div>
+      <div class="stat-card stat-card--locked">
+        <div class="stat-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="11" x="3" y="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-card__value">{{ lockedUsersCount }}</div>
+          <div class="stat-card__label">Verrouilles</div>
+        </div>
+      </div>
+      <div class="stat-card stat-card--inactive">
+        <div class="stat-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m15 9-6 6"/>
+            <path d="m9 9 6 6"/>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-card__value">{{ inactiveUsersCount }}</div>
+          <div class="stat-card__label">Inactifs</div>
+        </div>
+      </div>
+    </div>
+
+    <section class="users-list-section">
+      <div class="section-header">
+        <div class="section-header__title">
+          <h2>Registre des comptes</h2>
+          <span class="table-meta">{{ filteredUsers.length }} utilisateur(s)</span>
+        </div>
+        <div class="section-header__tools">
+          <div class="search-container">
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Rechercher un utilisateur..."
+              [(ngModel)]="searchTerm"
+            />
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div class="table-container__top">
+          <span>Comptes internes</span>
+          <span>{{ pageIndex + 1 }} / {{ totalPages }}</span>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Email</th>
+              <th>Departement</th>
+              <th>Service</th>
+              <th>Statut</th>
+              <th>Roles</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of pagedUsers" (click)="selectUser(user)" [class.selected]="selectedId === user.id">
+              <td>
+                <div class="user-info">
+                  <div class="user-avatar">
+                    {{ (user.prenom?.[0] || user.username?.[0] || 'U').toUpperCase() }}
+                  </div>
+                  <div class="user-details">
+                    <div class="user-name">{{ user.prenom }} {{ user.nom }}</div>
+                    <div class="user-username" *ngIf="user.username && user.username !== user.email">
+                      {{ '@' + user.username }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.codeDepartement || user.nomDepartement || '-' }}</td>
+              <td>{{ user.nomService || '-' }}</td>
+              <td>
+                <span class="badge" [class.badge--success]="user.activated && !user.locked" 
+                      [class.badge--warning]="user.locked" 
+                      [class.badge--error]="!user.activated">
+                  <span class="status-dot" aria-hidden="true"></span>
+                  {{ user.activated && !user.locked ? 'Actif' : user.locked ? 'Verrouille' : 'Inactif' }}
+                </span>
+              </td>
+              <td>
+                <div class="roles-list">
+                  <span class="chip chip--small" *ngFor="let role of user.roles?.slice(0, 2)">
+                    {{ role.libelle }}
+                  </span>
+                  <span class="chip chip--small chip--more" *ngIf="(user.roles?.length ?? 0) > 2">
+                    +{{ (user.roles?.length ?? 0) - 2 }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <button class="icon-btn icon-btn--view" (click)="selectUser(user); $event.stopPropagation()" title="Voir details">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                  <button class="icon-btn icon-btn--edit" (click)="activateUser(user); $event.stopPropagation()"
+                          [title]="user.locked ? 'Activer' : 'Desactiver'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 12h18"/>
+                      <path d="M12 3v18"/>
+                    </svg>
+                  </button>
+                  <button class="icon-btn icon-btn--delete" (click)="deleteUser(user); $event.stopPropagation()" title="Supprimer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr class="empty-row" *ngIf="pagedUsers.length === 0">
+              <td colspan="7">
+                Aucun utilisateur ne correspond a la recherche.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pagination" *ngIf="totalPages > 1">
+          <button class="btn btn--outline" (click)="prevPage()" [disabled]="pageIndex === 0">
+            Precedent
+          </button>
+          <span class="pagination-info">
+            Page {{ pageIndex + 1 }} sur {{ totalPages }}
+          </span>
+          <button class="btn btn--outline" (click)="nextPage()" [disabled]="pageIndex === totalPages - 1">
+            Suivant
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="form-overlay" *ngIf="showCreateForm || selectedId">
+      <section class="user-form-section">
+        <div class="form-container">
+          <div class="form-header">
+            <div>
+              <span class="form-eyebrow">Compte utilisateur</span>
+              <h3 class="form-title">
+                {{ selectedId ? 'Modifier' : 'Creer' }} un utilisateur
+              </h3>
+            </div>
+            <button class="btn btn--danger" (click)="resetForm()">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+              Fermer
+            </button>
+          </div>
+
+          <form #userForm="ngForm" (ngSubmit)="selectedId ? updateUser(userForm) : createUser(userForm)">
+          <div class="form-section">
+            <h4 class="form-section-title">Informations Generales</h4>
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="form-field__label">Nom *</label>
+                <input type="text" class="form-field__input" [(ngModel)]="form.nom" name="nom" required>
+              </div>
+              <div class="form-field">
+                <label class="form-field__label">Prenom *</label>
+                <input type="text" class="form-field__input" [(ngModel)]="form.prenom" name="prenom" required>
+              </div>
+              <div class="form-field">
+                <label class="form-field__label">Email *</label>
+                <input type="email" class="form-field__input" [(ngModel)]="form.email" name="email" required>
+              </div>
+              <div class="form-field">
+                <label class="form-field__label">Telephone</label>
+                <input type="tel" class="form-field__input" [(ngModel)]="form.telephone" name="telephone">
+              </div>
+              <div class="form-field">
+                <label class="form-field__label">Poste</label>
+                <input type="text" class="form-field__input" [(ngModel)]="form.telephoneFixe" name="telephoneFixe" placeholder="+226 25 00 00 00">
+              </div>
+              <div class="form-field">
+                <label class="form-field__label">Fonction</label>
+                <select class="form-field__input" [(ngModel)]="form.fonction" name="fonction" (ngModelChange)="onFonctionChange()">
+                  <option [ngValue]="undefined">Selectionner</option>
+                  <option value="AGENT">AGENT</option>
+                  <option value="CHEF_SERVICE">CHEF_SERVICE</option>
+                  <option value="DIRECTEUR">DIRECTEUR</option>
+                  <option value="DIRECTEUR_GENERAL_ADJOINT">DIRECTEUR_GENERAL_ADJOINT</option>
+                  <option value="DIRECTEUR_GENERAL">DIRECTEUR_GENERAL</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-field__label">Departement *</label>
+                <select class="form-field__input" [(ngModel)]="form.idDepartement" name="idDepartement" required (ngModelChange)="onDepartementChange()">
+                  <option [ngValue]="undefined">Selectionner</option>
+                  <option *ngFor="let dep of departements" [value]="dep.id">{{ dep.nom }}</option>
+                </select>
+              </div>
+              <div class="form-field" *ngIf="requiresServiceSelection">
+                <label class="form-field__label">Service <span *ngIf="form.fonction === 'AGENT'">*</span></label>
+                <select class="form-field__input" [(ngModel)]="form.idService" name="idService" [required]="form.fonction === 'AGENT'" [disabled]="!form.idDepartement" (ngModelChange)="onServiceChange()">
+                  <option [ngValue]="undefined">Selectionner</option>
+                  <option *ngFor="let service of filteredServices" [value]="service.id">{{ service.nom }}</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-field__label">Agence</label>
+                <select class="form-field__input" [(ngModel)]="form.idAgence" name="idAgence" [disabled]="!form.idDepartement">
+                  <option [ngValue]="undefined">Selectionner</option>
+                  <option *ngFor="let agence of filteredAgences" [value]="agence.id">{{ agence.nom }}</option>
+                </select>
+              </div>
+              <div class="form-field" *ngIf="form.fonction && form.fonction !== 'DIRECTEUR_GENERAL'">
+                <label class="form-field__label">Superieur direct *</label>
+                <select class="form-field__input" [(ngModel)]="form.idSuperieur" name="idSuperieur" required [disabled]="form.fonction === 'AGENT'">
+                  <option [ngValue]="undefined">Selectionner</option>
+                  <option *ngFor="let s of availableDirectSuperiors" [value]="s.id">
+                    {{ s.prenom }} {{ s.nom }} ({{ s.fonction }})
+                  </option>
+                </select>
+                <small *ngIf="form.nomCompletSuperieur">Enregistre: {{ form.nomCompletSuperieur }}</small>
+              </div>
+              <div class="form-field" *ngIf="requiresSecondarySuperior">
+                <label class="form-field__label">2e superieur direct *</label>
+                <select class="form-field__input" [(ngModel)]="form.idSuperieurSecondaire" name="idSuperieurSecondaire" required [disabled]="form.fonction === 'AGENT'">
+                  <option [ngValue]="undefined">Selectionner</option>
+                  <option *ngFor="let s of availableChefsService" [value]="s.id">
+                    {{ s.prenom }} {{ s.nom }} ({{ s.fonction }})
+                  </option>
+                </select>
+                <small *ngIf="form.nomCompletSuperieurSecondaire">Enregistre: {{ form.nomCompletSuperieurSecondaire }}</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section" *ngIf="selectedId; else roleAssignHint">
+            <div class="form-section-header">
+              <h4 class="form-section-title">Gestion des Roles</h4>
+              <div class="role-management-actions">
+                <button type="button" class="btn btn--ghost btn--small" (click)="showRoleOperationHistory()" title="Historique des operations">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                  </svg>
+                  Historique
+                </button>
+              </div>
+            </div>
+
+            <div class="role-management-group">
+              <div class="role-group-header">
+                <h5 class="role-group-title">Roles Assignes</h5>
+                <span class="role-count">{{ (selectedUserRoles$ | async)?.length || 0 }} role(s)</span>
+              </div>
+              <div class="roles-grid assigned-roles" *ngIf="!roleManagementLoading">
+                <div class="role-card role-card--assigned" 
+                     *ngFor="let role of (selectedUserRoles$ | async)" 
+                     [class.role-card--removing]="false">
+                  <div class="role-card__content">
+                    <div class="role-info">
+                      <h6 class="role-name">{{ role.libelle }}</h6>
+                      <span class="role-code">{{ role.code }}</span>
+                    </div>
+                    <div class="role-actions">
+                      <button type="button" class="btn btn--danger btn--small" 
+                              (click)="removeRoleFromUser(role)"
+                              title="Retirer ce role">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/>
+                          <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                        Retirer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="empty-state" *ngIf="(selectedUserRoles$ | async)?.length === 0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="m22 21-3-3 3-3"/>
+                  </svg>
+                  <p>Aucun role assigne</p>
+                </div>
+              </div>
+              <div class="loading-state" *ngIf="roleManagementLoading">
+                <div class="spinner"></div>
+                <p>Chargement des roles...</p>
+              </div>
+            </div>
+
+            <div class="role-management-group">
+              <div class="role-group-header">
+                <h5 class="role-group-title">Roles Disponibles</h5>
+                <span class="role-count">{{ (availableUserRoles$ | async)?.length || 0 }} role(s)</span>
+              </div>
+              <div class="roles-grid available-roles" *ngIf="!roleManagementLoading">
+                <div class="role-card role-card--available" 
+                     *ngFor="let role of (availableUserRoles$ | async)">
+                  <div class="role-card__content">
+                    <div class="role-info">
+                      <h6 class="role-name">{{ role.libelle }}</h6>
+                      <span class="role-code">{{ role.code }}</span>
+                    </div>
+                    <div class="role-actions">
+                      <button type="button" class="btn btn--primary btn--small" 
+                              (click)="addRoleToUser(role)"
+                              title="Assigner ce role">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="12" y1="5" x2="12" y2="19"/>
+                          <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Assigner
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="empty-state" *ngIf="(availableUserRoles$ | async)?.length === 0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <p>Tous les roles sont assignes</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ng-template #roleAssignHint>
+            <div class="form-section">
+              <h4 class="form-section-title">Gestion des Roles</h4>
+              <p class="page-subtitle">Enregistrez d'abord l'utilisateur, puis utilisez l'icone oeil pour lui assigner des roles.</p>
+            </div>
+          </ng-template>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn--outline" (click)="resetForm()">
+              Annuler
+            </button>
+            <button type="submit" class="btn btn--primary" [disabled]="userForm.invalid || isSubmitting">
+              {{ isSubmitting ? 'En cours...' : (selectedId ? 'Mettre a jour' : 'Creer') }}
+            </button>
+          </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="success-popup-overlay" *ngIf="showUpdateSuccessPopup" (click)="closeUpdateSuccessPopup()">
+  <div class="success-popup" (click)="$event.stopPropagation()">
+    <h4>Mise à jour réussie</h4>
+    <p>{{ updateSuccessMessage }}</p>
+    <button type="button" class="btn btn--primary" (click)="closeUpdateSuccessPopup()">OK</button>
+  </div>
+</div>

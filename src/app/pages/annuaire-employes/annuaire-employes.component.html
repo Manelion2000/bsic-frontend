@@ -1,0 +1,195 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Employes</h1>
+      <p class="page-subtitle">Base des collaborateurs et fiches internes.</p>
+    </div>
+    <button class="btn btn--primary" (click)="startCreate()">Nouvel employe</button>
+  </div>
+
+  <div class="card">
+    <div class="form-grid form-grid--register">
+      <label class="form-field">
+        Recherche
+        <input type="text" [(ngModel)]="searchQuery" placeholder="Nom, prenom..." />
+      </label>
+      <label class="form-field">
+        Taille page
+        <select [(ngModel)]="pageSize">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="8">8</option>
+          <option [ngValue]="15">15</option>
+        </select>
+      </label>
+      <div class="form-actions">
+        <button class="btn btn--primary" (click)="load()">Rechercher</button>
+      </div>
+    </div>
+
+    <table class="table" style="margin-top: 1rem;">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Fonction</th>
+          <th>Service</th>
+          <th>Telephone</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let emp of pagedEmployes" (click)="selectEmploye(emp)">
+          <td>{{ emp.nom }} {{ emp.prenom }}</td>
+          <td>{{ emp.fonction }}</td>
+          <td>{{ emp.nomService }}</td>
+          <td>{{ emp.telephone }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="icon-btn" title="Update" aria-label="Update" (click)="selectEmploye(emp); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+              <button class="icon-btn icon-btn--danger" title="Supprimer" aria-label="Supprimer" [disabled]="deletingId === emp.id || isSaving || isUpdating" (click)="delete(emp); $event.stopPropagation();">
+                <span *ngIf="deletingId === emp.id" class="spinner spinner--tiny spinner--dark" aria-hidden="true"></span>
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="form-actions">
+      <button class="btn btn--light" (click)="prevPage()">Precedent</button>
+      <span class="chip">Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
+      <button class="btn btn--light" (click)="nextPage()">Suivant</button>
+    </div>
+  </div>
+
+  <div class="form-overlay" *ngIf="showForm">
+  <form class="card card--accent employe-form-modal" #employeForm="ngForm">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire employe</h2>
+        <p class="page-subtitle">Completer les informations RH.</p>
+      </div>
+      <button class="btn btn--danger" type="button" (click)="resetForm()">Fermer</button>
+    </div>
+    <div *ngIf="message" class="feedback" [class.feedback--error]="messageType === 'error'" [class.feedback--success]="messageType === 'success'">
+      {{ message }}
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Nom <span class="required-star">*</span>
+        <input type="text" [(ngModel)]="form.nom" name="nom" required placeholder="Nom" />
+        <span class="badge badge--orange" *ngIf="submitted && employeForm.controls['nom']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Prenom <span class="required-star">*</span>
+        <input type="text" [(ngModel)]="form.prenom" name="prenom" required placeholder="Prenom" />
+        <span class="badge badge--orange" *ngIf="submitted && employeForm.controls['prenom']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Matricule
+        <input type="text" [(ngModel)]="form.matricule" name="matricule" placeholder="MAT-001" />
+      </label>
+      <label class="form-field">
+        Fonction
+        <select [(ngModel)]="form.fonction" name="fonction" (ngModelChange)="onFonctionChange()">
+          <option [ngValue]="undefined">Selectionner</option>
+          <option>DIRECTEUR</option>
+          <option>CHEF_SERVICE</option>
+          <option>DIRECTEUR_GENERAL</option>
+          <option>DIRECTEUR_GENERAL_ADJOINT</option>
+          <option>AGENT</option>
+        </select>
+      </label>
+      <label class="form-field" *ngIf="form.fonction && form.fonction !== 'DIRECTEUR_GENERAL'">
+        Superieur direct <span class="required-star">*</span>
+        <select [(ngModel)]="form.idSuperieur" name="idSuperieur" required>
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let s of availableDirectSuperiors" [value]="s.id">{{ s.prenom }} {{ s.nom }} ({{ s.fonction }})</option>
+        </select>
+        <small *ngIf="form.nomCompletSuperieur">Enregistre: {{ form.nomCompletSuperieur }}</small>
+      </label>
+      <label class="form-field" *ngIf="requiresSecondarySuperior">
+        2e superieur direct <span class="required-star">*</span>
+        <select [(ngModel)]="form.idSuperieurSecondaire" name="idSuperieurSecondaire" required>
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let s of availableChefsService" [value]="s.id">{{ s.prenom }} {{ s.nom }} ({{ s.fonction }})</option>
+        </select>
+        <small *ngIf="form.nomCompletSuperieurSecondaire">Enregistre: {{ form.nomCompletSuperieurSecondaire }}</small>
+      </label>
+      <label class="form-field">
+        Sexe <span class="required-star">*</span>
+        <select [(ngModel)]="form.sexe" name="sexe" required>
+          <option>MASCULIN</option>
+          <option>FEMININ</option>
+        </select>
+        <span class="badge badge--orange" *ngIf="submitted && employeForm.controls['sexe']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Email <span class="required-star">*</span>
+        <input type="email" [(ngModel)]="form.email" name="email" required placeholder="prenom.nom@bsic.bf" />
+        <span class="badge badge--orange" *ngIf="submitted && employeForm.controls['email']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Telephone <span class="required-star">*</span>
+        <input type="text" [(ngModel)]="form.telephone" name="telephone" required placeholder="+226 70 00 00 00" />
+        <span class="badge badge--orange" *ngIf="submitted && employeForm.controls['telephone']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Email pro
+        <input type="email" [(ngModel)]="form.emailPro" name="emailPro" placeholder="email@bsic.bf" />
+      </label>
+      <label class="form-field">
+        Telephone mobile
+        <input type="text" [(ngModel)]="form.telephoneMobile" name="telephoneMobile" placeholder="+226 70 00 00 01" />
+      </label>
+      <label class="form-field">
+        Poste
+        <input type="text" [(ngModel)]="form.telephoneFixe" name="telephoneFixe" placeholder="+226 25 00 00 00" />
+      </label>
+      <label class="form-field">
+        Departement <span class="required-star">*</span>
+        <select [(ngModel)]="form.idDepartement" name="idDepartement" required (ngModelChange)="onDepartementChange()">
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let dep of departements" [value]="dep.id">{{ dep.nom }}</option>
+        </select>
+        <span class="badge badge--orange" *ngIf="submitted && employeForm.controls['idDepartement']?.invalid">Requis</span>
+      </label>
+      <label class="form-field" *ngIf="requiresServiceSelection">
+        Service <span class="required-star">*</span>
+        <select [(ngModel)]="form.idService" name="idService" [required]="form.fonction === 'AGENT'" [disabled]="!form.idDepartement">
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let srv of filteredServices" [value]="srv.id">{{ srv.nom }}</option>
+        </select>
+        <span class="badge badge--orange" *ngIf="submitted && employeForm.controls['idService']?.invalid && form.fonction === 'AGENT'">Requis</span>
+      </label>
+      <label class="form-field">
+        Agence
+        <select [(ngModel)]="form.idAgence" name="idAgence" [disabled]="!form.idDepartement">
+          <option [ngValue]="undefined">Selectionner</option>
+          <option *ngFor="let ag of filteredAgences" [value]="ag.id">{{ ag.nom }}</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" type="button" [disabled]="isSaving || isUpdating || !!deletingId" (click)="create(employeForm)">
+        <span *ngIf="isSaving" class="spinner" aria-hidden="true"></span>
+        {{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
+      <button class="btn btn--outline" type="button" [disabled]="isSaving || isUpdating || !!deletingId" (click)="update(employeForm)">
+        <span *ngIf="isUpdating" class="spinner spinner--dark" aria-hidden="true"></span>
+        {{ isUpdating ? 'Mise a jour...' : 'Mettre a jour' }}
+      </button>
+      <button class="btn btn--light" type="button" [disabled]="isSaving || isUpdating || !!deletingId" (click)="resetForm()">Annuler</button>
+    </div>
+  </form>
+  </div>
+</section>
+

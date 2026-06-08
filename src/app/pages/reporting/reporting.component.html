@@ -1,0 +1,24 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Reporting</h1>
+      <p class="page-subtitle">Generer les rapports PDF et exports.</p>
+    </div>
+    <span class="chip">{{ message }}</span>
+  </div>
+
+  <div class="card">
+    <div style="font-weight: 600; margin-bottom: 0.6rem;">Rapport produits</div>
+    <p style="color: var(--bsic-muted);">Telecharge le PDF des produits via l'API.</p>
+    <div class="form-actions">
+      <button class="btn btn--primary" (click)="downloadProduits()">Telecharger produits</button>
+    </div>
+  </div>
+
+  <div class="card card--accent">
+    <div style="font-weight: 600; margin-bottom: 0.6rem;">Fiche habilitation</div>
+    <div class="form-actions">
+      <button class="btn btn--primary" (click)="downloadFiche()">Telecharger fiche</button>
+    </div>
+  </div>
+</section>

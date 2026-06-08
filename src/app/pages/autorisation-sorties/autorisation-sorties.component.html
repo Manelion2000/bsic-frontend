@@ -1,0 +1,196 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Workflow interne</span>
+      <h1 class="page-title">Autorisations de sortie</h1>
+      <p class="page-subtitle">Demandeur: creez vos demandes. Superieur: validez/rejetez.</p>
+    </div>
+    <span class="chip" *ngIf="message">{{ message }}</span>
+  </div>
+
+  <div class="card card--accent authorization-request-card">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <h2 class="page-title" style="font-size: 1.35rem;">Nouvelle demande</h2>
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom: 1rem;">
+      <label class="form-field">
+        Nom complet
+        <input type="text" [value]="(currentUser?.nom || '') + ' ' + (currentUser?.prenom || '')" disabled />
+      </label>
+      <label class="form-field">
+        Matricule
+        <input type="text" [value]="currentUser?.matricule || ''" disabled />
+      </label>
+      <label class="form-field">
+        Fonction
+        <input type="text" [value]="currentUser?.fonction || ''" disabled />
+      </label>
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Motif
+        <input type="text" [(ngModel)]="form.motif" name="motif" placeholder="Motif..." />
+      </label>
+      <label class="form-field">
+        Date sortie
+        <input type="date" [(ngModel)]="form.dateSortie" name="dateSortie" />
+      </label>
+      <label class="form-field">
+        Type de structure
+        <select [(ngModel)]="form.typeStructure" name="typeStructure" (change)="onTypeStructureChange()">
+          <option value="DIRECTION">Direction</option>
+          <option value="SERVICE">Service</option>
+          <option value="AGENCE">Agence</option>
+        </select>
+      </label>
+      <label class="form-field" *ngIf="form.typeStructure === 'DIRECTION'">
+        Direction
+        <select [(ngModel)]="form.idDirection" name="idDirection">
+          <option [ngValue]="undefined">-- Selectionner --</option>
+          <option *ngFor="let d of directions" [value]="d.id">{{ d.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field" *ngIf="form.typeStructure === 'SERVICE'">
+        Service
+        <select [(ngModel)]="form.idService" name="idService">
+          <option [ngValue]="undefined">-- Selectionner --</option>
+          <option *ngFor="let s of services" [value]="s.id">{{ s.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field" *ngIf="form.typeStructure === 'AGENCE'">
+        Agence
+        <select [(ngModel)]="form.idAgence" name="idAgence">
+          <option [ngValue]="undefined">-- Selectionner --</option>
+          <option *ngFor="let a of agences" [value]="a.id">{{ a.nom }}</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" (click)="createDemande()">Envoyer</button>
+      <button class="btn btn--light" (click)="reload()">Rafraichir</button>
+    </div>
+  </div>
+
+  <div class="card authorization-list-card">
+    <h3>Mes demandes</h3>
+    <table class="table">
+      <thead>
+      <tr>
+        <th>Motif</th>
+        <th>Date sortie</th>
+        <th>Structure</th>
+        <th>Statut</th>
+        <th>Commentaire</th>
+        <th>Details</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let d of mesDemandes">
+        <td>{{ d.motif }}</td>
+        <td>{{ d.dateSortie }}</td>
+        <td>{{ d.typeStructure }} {{ d.nomDirection || d.nomService || d.nomAgence }}</td>
+        <td>
+          <span
+            class="badge"
+            [class.badge--warning]="d.statutValidation === 'EN_ATTENTE'"
+            [class.badge--success]="d.statutValidation === 'VALIDEE'"
+            [class.badge--error]="d.statutValidation === 'REJETEE'"
+          >
+            {{ d.statutValidation }}
+          </span>
+        </td>
+        <td>{{ d.commentaireValidation }}</td>
+        <td>
+          <button class="btn btn--light btn--small details-btn" (click)="ouvrirDetails(d)" title="Voir details">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            Voir
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card authorization-validation-card">
+    <h3>Demandes a valider (superieur)</h3>
+    <table class="table">
+      <thead>
+      <tr>
+        <th>Demandeur</th>
+        <th>Motif</th>
+        <th>Date sortie</th>
+        <th>Structure</th>
+        <th>Details</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let d of demandesAValider">
+        <td>{{ d.nomCompletDemandeur }}</td>
+        <td>{{ d.motif }}</td>
+        <td>{{ d.dateSortie }}</td>
+        <td>{{ d.typeStructure }} {{ d.nomDirection || d.nomService || d.nomAgence }}</td>
+        <td>
+          <button class="btn btn--light btn--small details-btn" (click)="ouvrirDetails(d)" title="Voir details">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            Voir
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="details-overlay" *ngIf="demandeSelectionnee">
+    <div class="details-modal">
+      <div class="details-header">
+        <h3>Details de la demande</h3>
+        <button class="btn btn--light btn--small" (click)="fermerDetails()">Fermer</button>
+      </div>
+      <div class="details-grid">
+        <p><strong>Demandeur:</strong> {{ demandeSelectionnee.nomCompletDemandeur }}</p>
+        <p><strong>Validateur:</strong> {{ demandeSelectionnee.nomCompletValidateur || 'Non defini' }}</p>
+        <p><strong>Motif:</strong> {{ demandeSelectionnee.motif }}</p>
+        <p><strong>Date sortie:</strong> {{ demandeSelectionnee.dateSortie }}</p>
+        <p><strong>Structure:</strong> {{ demandeSelectionnee.typeStructure }}</p>
+        <p><strong>Direction:</strong> {{ demandeSelectionnee.nomDirection || '-' }}</p>
+        <p><strong>Service:</strong> {{ demandeSelectionnee.nomService || '-' }}</p>
+        <p><strong>Agence:</strong> {{ demandeSelectionnee.nomAgence || '-' }}</p>
+        <p><strong>Statut:</strong> {{ demandeSelectionnee.statutValidation }}</p>
+        <p><strong>Commentaire:</strong> {{ demandeSelectionnee.commentaireValidation || '-' }}</p>
+      </div>
+      <div class="details-actions" *ngIf="canProcessDemande(demandeSelectionnee)">
+        <button
+          class="btn btn--small btn-validate"
+          (click)="valider(demandeSelectionnee.id)"
+        >
+          Valider
+        </button>
+        <button class="btn btn--small btn-reject" (click)="rejeter(demandeSelectionnee.id)">
+          Rejeter
+        </button>
+        <button class="btn btn--small btn--light" (click)="visionnerPdf(demandeSelectionnee.id)">
+          Visionner PDF
+        </button>
+        <button class="btn btn--small btn--light" (click)="telechargerPdf(demandeSelectionnee.id)">
+          Telecharger PDF
+        </button>
+      </div>
+      <div class="details-actions" *ngIf="!canProcessDemande(demandeSelectionnee)">
+        <button class="btn btn--small btn--light" (click)="visionnerPdf(demandeSelectionnee.id)">
+          Visionner PDF
+        </button>
+        <button class="btn btn--small btn--light" (click)="telechargerPdf(demandeSelectionnee.id)">
+          Telecharger PDF
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,163 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Reunions</h1>
+      <p class="page-subtitle">Planifier les reunions, participants et actions.</p>
+    </div>
+    <div class="form-actions" style="margin-top: 0;">
+      <span class="chip">{{ message }}</span>
+      <button class="btn btn--primary" (click)="openCreateForm()">Nouvelle reunion</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="form-grid">
+      <label class="form-field">
+        Recherche
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Titre, objet..." />
+      </label>
+      <label class="form-field">
+        Filtrer par
+        <select [(ngModel)]="filterScope" (ngModelChange)="onFilterScopeChange()">
+          <option value="ALL">Tous</option>
+          <option value="DEPARTEMENT">Departement</option>
+          <option value="SERVICE">Service</option>
+          <option value="AGENCE">Agence</option>
+        </select>
+      </label>
+      <label class="form-field" *ngIf="filterScope !== 'ALL'">
+        Valeur
+        <select [(ngModel)]="filterScopeId" (ngModelChange)="onFilterScopeIdChange()">
+          <option value="">-- Toutes --</option>
+          <option *ngFor="let option of filterOptions" [value]="option.id">{{ option.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Taille page
+        <select [(ngModel)]="pageSize">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="8">8</option>
+          <option [ngValue]="15">15</option>
+        </select>
+      </label>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Date</th>
+          <th>Cible</th>
+          <th>Validation</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let reunion of pagedReunions" (click)="selectReunion(reunion)">
+          <td>{{ reunion.titre }}</td>
+          <td>{{ reunion.dateHeure }}</td>
+          <td>{{ getRelationLabel(reunion) }}</td>
+          <td>
+            <span class="badge" [class.badge--orange]="!reunion.valideParDirecteur">
+              {{ reunion.valideParDirecteur ? 'Valide' : 'En attente' }}
+            </span>
+          </td>
+          <td>
+            <div class="table-actions">
+              <button class="icon-btn" title="Update" aria-label="Update" (click)="selectReunion(reunion); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+              <button class="icon-btn" title="Ouvrir PV" aria-label="Ouvrir PV" (click)="openPv(reunion); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+              <button class="icon-btn" title="Telecharger PV" aria-label="Telecharger PV" (click)="downloadPv(reunion); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <path d="M7 10l5 5 5-5" />
+                  <path d="M12 15V3" />
+                </svg>
+              </button>
+              <button class="icon-btn icon-btn--danger" disabled title="Supprimer indisponible" aria-label="Supprimer indisponible">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="form-actions">
+      <button class="btn btn--light" (click)="prevPage()">Precedent</button>
+      <span class="chip">Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
+      <button class="btn btn--light" (click)="nextPage()">Suivant</button>
+    </div>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+  <form class="card card--accent crud-modal" #reunionForm="ngForm" (click)="$event.stopPropagation()">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire reunion</h2>
+        <p class="page-subtitle">Creer une reunion et definir le contenu.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Titre
+        <input type="text" [(ngModel)]="form.titre" name="titre" required placeholder="Comite credit" />
+        <span class="badge badge--orange" *ngIf="submitted && reunionForm.controls['titre']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Objet
+        <input type="text" [(ngModel)]="form.objet" name="objet" placeholder="Ordre du jour" />
+      </label>
+      <label class="form-field">
+        Date et heure
+        <input type="datetime-local" [ngModel]="dateHeureLocalValue" name="dateHeure" required (ngModelChange)="onDateHeureChange($event)" />
+        <span class="badge badge--orange" *ngIf="submitted && reunionForm.controls['dateHeure']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Departement
+        <select [(ngModel)]="form.idDepartement" name="idDepartement" (ngModelChange)="onScopeChange('departement')">
+          <option [ngValue]="undefined">-- Selectionner --</option>
+          <option *ngFor="let dep of departements" [ngValue]="dep.id">{{ dep.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Agence
+        <select [(ngModel)]="form.idAgence" name="idAgence" (ngModelChange)="onScopeChange('agence')">
+          <option [ngValue]="undefined">-- Selectionner --</option>
+          <option *ngFor="let ag of agences" [ngValue]="ag.id">{{ ag.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        PV de la reunion
+        <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" (change)="onPvFileSelected($event)" />
+        <small *ngIf="pvFileName">{{ pvFileName }}</small>
+      </label>
+      <label class="form-field">
+        Valide par directeur
+        <select [(ngModel)]="form.valideParDirecteur" name="valideParDirecteur">
+          <option [ngValue]="false">Non</option>
+          <option [ngValue]="true">Oui</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" type="button" (click)="create(reunionForm)">Enregistrer</button>
+      <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+    </div>
+  </form>
+  </div>
+
+</section>
+

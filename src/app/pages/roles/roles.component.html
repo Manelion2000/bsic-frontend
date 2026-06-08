@@ -1,0 +1,95 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Securite applicative</span>
+      <h1 class="page-title">Roles</h1>
+      <p class="page-subtitle">Definir les niveaux d'acces et les perimetres par role.</p>
+    </div>
+    <button class="btn btn--primary" (click)="openCreateForm()">Nouveau role</button>
+  </div>
+
+  <div class="card workspace-panel">
+    <div class="form-grid">
+      <label class="form-field">
+        Recherche
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Libelle, code..." />
+      </label>
+      <label class="form-field">
+        Taille page
+        <select [(ngModel)]="pageSize">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="8">8</option>
+          <option [ngValue]="15">15</option>
+        </select>
+      </label>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Libelle</th>
+          <th>Code</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let role of pagedRoles" (click)="selectRole(role)">
+          <td>{{ role.libelle }}</td>
+          <td><span class="chip chip--small code-chip">{{ role.code }}</span></td>
+          <td>
+            <div class="table-actions">
+              <button class="icon-btn" title="Update" aria-label="Update" (click)="selectRole(role); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+              <button class="icon-btn icon-btn--danger" title="Supprimer" aria-label="Supprimer" (click)="deleteRole(role); $event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="form-actions">
+      <button class="btn btn--light" (click)="prevPage()">Precedent</button>
+      <span class="chip">Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
+      <button class="btn btn--light" (click)="nextPage()">Suivant</button>
+    </div>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+  <form class="card card--accent crud-modal" #roleForm="ngForm" (click)="$event.stopPropagation()">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <span class="page-header__eyebrow">Parametrage</span>
+        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire role</h2>
+        <p class="page-subtitle">{{ message || 'Renseigner le libelle et le code.' }}</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Libelle
+        <input type="text" [(ngModel)]="form.libelle" name="libelle" required placeholder="Ex: Administrateur" />
+        <span class="badge badge--orange" *ngIf="submitted && roleForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Code
+        <input type="text" [(ngModel)]="form.code" name="code" required placeholder="ROLE_ADMIN" />
+        <span class="badge badge--orange" *ngIf="submitted && roleForm.controls['']?.invalid">Requis</span>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" type="button" (click)="createRole(roleForm)">Enregistrer</button>
+      <button class="btn btn--outline" type="button" (click)="updateRole(roleForm)">Mettre a jour</button>
+      <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+    </div>
+  </form>
+  </div>
+</section>
+

@@ -1,0 +1,92 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Habilitations</span>
+      <h1 class="page-title">Creation des comptes plateforme</h1>
+      <p class="page-subtitle">Suivi operationnel et audit de creation des comptes apres validation des fiches.</p>
+    </div>
+    <div class="header-actions">
+      <span class="chip" *ngIf="message">{{ message }}</span>
+      <button class="btn btn--light" (click)="reload()">Rafraichir</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab" [class.active]="statutFiltre === 'A_CREER'" (click)="setFiltre('A_CREER')">A creer</button>
+    <button class="tab" [class.active]="statutFiltre === 'EN_COURS_CREATION'" (click)="setFiltre('EN_COURS_CREATION')">En cours</button>
+    <button class="tab" [class.active]="statutFiltre === 'CREE'" (click)="setFiltre('CREE')">Crees</button>
+    <button class="tab" [class.active]="statutFiltre === 'TOUS'" (click)="setFiltre('TOUS')">Audit complet</button>
+  </div>
+
+  <div class="card comptes-card">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Demandeur</th>
+          <th>Plateforme</th>
+          <th>Type</th>
+          <th>Fiche</th>
+          <th>Statut</th>
+          <th>Createur</th>
+          <th>Date creation</th>
+          <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let compte of comptes">
+          <td>
+            <strong>{{ compte.nomCompletDemandeur }}</strong>
+            <small>{{ compte.matriculeDemandeur || '-' }} - {{ compte.nomServiceDemandeur || compte.nomDepartementDemandeur || '-' }}</small>
+          </td>
+          <td>{{ compte.nomPlateforme || '-' }}</td>
+          <td>{{ compte.typePlateforme || '-' }}</td>
+          <td>{{ compte.idFiche }}</td>
+          <td>
+            <span class="badge" [class.badge--warning]="compte.statutCreation === 'A_CREER'"
+                  [class.badge--info]="compte.statutCreation === 'EN_COURS_CREATION'"
+                  [class.badge--success]="compte.statutCreation === 'CREE'">
+              {{ compte.statutCreation }}
+            </span>
+          </td>
+          <td>{{ compte.nomCompletCreePar || '-' }}</td>
+          <td>{{ compte.dateCreation || '-' }}</td>
+          <td><button class="btn btn--small btn--light" (click)="ouvrir(compte)">Voir</button></td>
+        </tr>
+        <tr *ngIf="!comptes.length">
+          <td colspan="8" class="empty-state">{{ loading ? 'Chargement...' : 'Aucun compte plateforme pour ce filtre.' }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="details-overlay" *ngIf="selected">
+    <div class="details-modal">
+      <div class="details-header">
+        <div>
+          <span class="page-header__eyebrow">Compte plateforme</span>
+          <h3>{{ selected.nomPlateforme }} - {{ selected.nomCompletDemandeur }}</h3>
+        </div>
+        <button class="btn btn--small btn--light" (click)="fermer()">Fermer</button>
+      </div>
+      <div class="details-grid">
+        <p><span>Demandeur</span><strong>{{ selected.nomCompletDemandeur }}</strong></p>
+        <p><span>Matricule</span><strong>{{ selected.matriculeDemandeur || '-' }}</strong></p>
+        <p><span>Plateforme</span><strong>{{ selected.nomPlateforme || '-' }}</strong></p>
+        <p><span>Type</span><strong>{{ selected.typePlateforme || '-' }}</strong></p>
+        <p><span>Statut</span><strong>{{ selected.statutCreation }}</strong></p>
+        <p><span>Createur</span><strong>{{ selected.nomCompletCreePar || '-' }}</strong></p>
+        <p><span>Date creation</span><strong>{{ selected.dateCreation || '-' }}</strong></p>
+      </div>
+      <label class="form-field comment-field">
+        Commentaire
+        <textarea rows="3" [(ngModel)]="commentaire" name="commentaire"></textarea>
+      </label>
+      <div class="details-actions">
+        <button class="btn btn--light" *ngIf="selected.statutCreation !== 'CREE'" (click)="demarrer()">Demarrer creation</button>
+        <button class="btn btn--primary" *ngIf="selected.statutCreation !== 'CREE'" (click)="marquerCree()">Marquer comme cree</button>
+      </div>
+    </div>
+  </div>
+</section>

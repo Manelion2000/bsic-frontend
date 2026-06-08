@@ -1,0 +1,74 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Gouvernance des acces</span>
+      <h1 class="page-title">Profils</h1>
+      <p class="page-subtitle">Segmentation des profils metiers et affectations.</p>
+    </div>
+    <button class="btn btn--primary" (click)="openCreateForm()">Nouveau profil</button>
+  </div>
+
+  <div class="card workspace-panel">
+    <div class="form-grid">
+      <label class="form-field">
+        Recherche
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Libelle, description..." />
+      </label>
+      <label class="form-field">
+        Taille page
+        <select [(ngModel)]="pageSize">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="8">8</option>
+          <option [ngValue]="15">15</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card profile-card" *ngFor="let profil of pagedProfils" (click)="selectProfil(profil)">
+      <h3 class="profile-card__title">{{ profil.libelle }}</h3>
+      <p class="profile-card__description">{{ profil.description }}</p>
+      <div class="pill-group">
+        <span class="pill">{{ profil.roles?.length || 0 }} roles</span>
+        <span class="pill pill--active">Actif</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn--light" (click)="prevPage()">Precedent</button>
+    <span class="chip">Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
+    <button class="btn btn--light" (click)="nextPage()">Suivant</button>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+  <form class="card card--accent crud-modal" #profilForm="ngForm" (click)="$event.stopPropagation()">
+    <div class="page-header" style="margin-bottom: 1rem;">
+      <div>
+        <span class="page-header__eyebrow">Parametrage</span>
+        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire profil</h2>
+        <p class="page-subtitle">{{ message || 'Definir la vocation du profil.' }}</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <label class="form-field">
+        Libelle
+        <input type="text" [(ngModel)]="form.libelle" name="libelle" required placeholder="Ex: Commercial" />
+        <span class="badge badge--orange" *ngIf="submitted && profilForm.controls['']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Description
+        <textarea rows="3" [(ngModel)]="form.description" name="description" placeholder="Missions, perimetre..."></textarea>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" type="button" (click)="createProfil(profilForm)">Enregistrer</button>
+      <button class="btn btn--outline" type="button" (click)="updateProfil(profilForm)">Mettre a jour</button>
+      <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+      <button class="btn btn--outline" type="button" *ngIf="form.id" (click)="deleteProfil(form)">Supprimer le profil</button>
+    </div>
+  </form>
+  </div>
+</section>
+

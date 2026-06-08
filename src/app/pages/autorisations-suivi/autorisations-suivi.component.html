@@ -1,0 +1,47 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Audit</span>
+      <h1 class="page-title">Suivi autorisations de sortie</h1>
+      <p class="page-subtitle">Recherche detaillee par demandeur, departement, validateur, statut, type et periode.</p>
+    </div>
+    <div class="header-actions">
+      <span class="chip" *ngIf="message">{{ message }}</span>
+      <button class="btn btn--light" (click)="reset()">Reinitialiser</button>
+      <button class="btn btn--primary" (click)="reload(0)">Filtrer</button>
+    </div>
+  </div>
+
+  <div class="card filters-card">
+    <label>Demandeur<select [(ngModel)]="filter.idDemandeur" name="idDemandeur"><option value="">Tous</option><option *ngFor="let u of users" [value]="u.id">{{ u.nom }} {{ u.prenom }} - {{ u.username }}</option></select></label>
+    <label>Validateur<select [(ngModel)]="filter.idValidateur" name="idValidateur"><option value="">Tous</option><option *ngFor="let u of users" [value]="u.id">{{ u.nom }} {{ u.prenom }} - {{ u.username }}</option></select></label>
+    <label>Departement<select [(ngModel)]="filter.idDepartement" name="idDepartement"><option value="">Tous</option><option *ngFor="let d of departements" [value]="d.id">{{ d.nom }}</option></select></label>
+    <label>Statut<select [(ngModel)]="filter.statutValidation" name="statutValidation"><option value="">Tous</option><option value="EN_ATTENTE">EN_ATTENTE</option><option value="VALIDEE">VALIDEE</option><option value="REJETEE">REJETEE</option></select></label>
+    <label>Type<select [(ngModel)]="filter.typeStructure" name="typeStructure"><option value="">Tous</option><option value="DIRECTION">DIRECTION</option><option value="SERVICE">SERVICE</option><option value="AGENCE">AGENCE</option></select></label>
+    <label>Date debut<input type="date" [(ngModel)]="filter.dateDebut" name="dateDebut"></label>
+    <label>Date fin<input type="date" [(ngModel)]="filter.dateFin" name="dateFin"></label>
+  </div>
+
+  <div class="card">
+    <div class="table-toolbar">
+      <strong>{{ totalElements }} resultat(s)</strong>
+      <div><button class="btn btn--small btn--light" (click)="prev()" [disabled]="page === 0">Precedent</button><span>Page {{ page + 1 }}</span><button class="btn btn--small btn--light" (click)="next()" [disabled]="(page + 1) * size >= totalElements">Suivant</button></div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Demandeur</th><th>Departement</th><th>Sortie</th><th>Structure</th><th>Statut</th><th>Validateur</th></tr></thead>
+        <tbody>
+        <tr *ngFor="let row of rows">
+          <td><strong>{{ row.nomDemandeur || '-' }}</strong><small>{{ row.matriculeDemandeur || '-' }}</small></td>
+          <td>{{ row.departement || row.service || '-' }}</td>
+          <td><strong>{{ row.dateSortie || '-' }}</strong><small>{{ row.motif || '-' }}</small></td>
+          <td><strong>{{ row.typeStructure || '-' }}</strong><small>{{ row.structure || '-' }}</small></td>
+          <td><span class="badge">{{ row.statutValidation }}</span><small>{{ row.dateValidation || '-' }}</small></td>
+          <td>{{ row.validateur || '-' }}</td>
+        </tr>
+        <tr *ngIf="!rows.length"><td colspan="6" class="empty-state">{{ loading ? 'Chargement...' : 'Aucune autorisation ne correspond aux filtres.' }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

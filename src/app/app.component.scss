@@ -1,0 +1,27 @@
+:host {
+  display: block;
+}
+
+.login-route {
+  min-height: 100vh;
+}
+
+.topbar__logout {
+  width: auto;
+  min-height: 36px;
+  padding: 0.45rem 0.72rem;
+  font-size: 0.8rem;
+}
+
+.sidebar__link-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.sidebar__link-label svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
