@@ -1,0 +1,33 @@
+<section class="section-stack">
+  <div class="page-header"><div><span class="page-header__eyebrow">Gestion RH</span><h1 class="page-title">Autorisations d'absence</h1><p class="page-subtitle">Demandes multi-jours et validation selon l’organigramme.</p></div><span class="chip" role="status" *ngIf="message">{{message}}</span></div>
+  <div class="absence-layout">
+    <section class="card">
+      <h2>Nouvelle demande</h2>
+      <div class="identity"><span>{{currentUser?.nom}} {{currentUser?.prenom}}</span><span>{{currentUser?.matricule}}</span><span>{{currentUser?.fonction}}</span></div>
+      <div *ngIf="!circuit"><p role="status" *ngIf="circuitLoading">Vérification du circuit…</p><p role="alert" *ngIf="circuitError">{{circuitError}}</p><button type="button" class="btn btn--light" *ngIf="circuitError" [disabled]="circuitLoading" (click)="loadCircuit()">Réessayer le chargement du circuit</button></div>
+      <app-rh-circuit [circuit]="circuit" [apercu]="true" [peutConfigurer]="peutConfigurerCircuit" [chargement]="circuitLoading || busy" [actualisationDisponible]="true" (actualiser)="loadCircuit()"></app-rh-circuit>
+      <div class="form-grid">
+        <label class="form-field">Début<input type="date" [(ngModel)]="form.dateDebut"></label>
+        <label class="form-field">Fin<input type="date" [(ngModel)]="form.dateFin"></label>
+        <label class="form-field wide">Motif<textarea rows="3" maxlength="1000" [(ngModel)]="form.motif"></textarea></label>
+      </div>
+      <div class="duration"><strong>{{nombreJours}}</strong> jour(s) calendaire(s)</div>
+      <button class="btn btn--primary" [disabled]="busy || circuitLoading || !circuit || !!circuit.blocage" (click)="create()">Soumettre</button>
+    </section>
+    <section class="card">
+      <div class="panel-title"><h2>À valider</h2><span class="count">{{aValider.length}}</span></div><p *ngIf="!aValider.length">Aucune décision en attente.</p>
+      <article class="decision" *ngFor="let d of aValider">
+        <div><strong>{{d.nomCompletDemandeur}}</strong><small>{{d.departement}} / {{d.service}}</small><p>{{d.motif}}</p><small>{{d.dateDebut}} au {{d.dateFin}} · {{d.nombreJours}} jour(s)</small><app-rh-circuit [circuit]="d.circuit"></app-rh-circuit></div>
+        <div class="actions"><button class="btn btn--small ok" [disabled]="busy || !d.circuit?.peutDecider" (click)="valider(d)">Approuver l’étape</button><button class="btn btn--small no" [disabled]="busy || !d.circuit?.peutDecider" (click)="rejeter(d)">Refuser</button></div>
+      </article>
+    </section>
+  </div>
+  <section class="card"><h2>Mes demandes</h2><div class="table-wrap"><table class="table"><thead><tr><th>Période</th><th>Durée</th><th>Motif</th><th>Statut et circuit</th><th>Signataire final</th><th></th></tr></thead><tbody>
+    <tr *ngFor="let d of mesDemandes"><td>{{d.dateDebut}} au {{d.dateFin}}</td><td>{{d.nombreJours}} j</td><td>{{d.motif}}</td><td><span class="badge">{{d.statutValidation}}</span><app-rh-circuit [circuit]="d.circuit"></app-rh-circuit></td><td>{{d.nomCompletValidateur||'-'}}</td><td><button *ngIf="d.statutValidation==='EN_ATTENTE'" [disabled]="busy" class="btn btn--small btn--light" (click)="annuler(d)">Annuler</button><button *ngIf="d.statutValidation==='VALIDEE'" class="btn btn--small btn--light" [disabled]="busy" (click)="document(d)">Télécharger l’acte signé</button></td></tr>
+  </tbody></table></div></section>
+  <section *ngIf="reportingAllowed">
+    <div class="report-head"><div><h2>Pilotage RH / DGA</h2><p>Absences comptabilisées après la dernière validation obligatoire.</p></div><div class="actions"><input type="date" [(ngModel)]="debutFiltre"><input type="date" [(ngModel)]="finFiltre"><button class="btn btn--light" (click)="loadReporting()">Actualiser</button></div></div>
+    <div class="metrics"><div><span>Demandes</span><strong>{{stats?.totalDemandes||0}}</strong></div><div><span>Jours validés</span><strong>{{stats?.totalJours||0}}</strong></div><div><span>En attente</span><strong>{{stats?.enAttente||0}}</strong></div><div><span>Validées</span><strong>{{stats?.validees||0}}</strong></div></div>
+    <div class="card table-wrap"><table class="table"><thead><tr><th>Agent</th><th>Structure</th><th>Période</th><th>Jours</th><th>Statut</th></tr></thead><tbody><tr *ngFor="let d of suivi"><td>{{d.nomCompletDemandeur}}<small>{{d.matriculeDemandeur}}</small></td><td>{{d.departement}} / {{d.service}}</td><td>{{d.dateDebut}} au {{d.dateFin}}</td><td>{{d.nombreJours}}</td><td>{{d.statutValidation}}</td></tr></tbody></table></div>
+  </section>
+</section>

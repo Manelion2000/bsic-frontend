@@ -100,7 +100,7 @@ export class HabilitationWorkflowService {
       this.habilitationsService.getPlateformes().pipe(
         map(plateformes => plateformes.find(p => p.id === plateformeId))
       ),
-      this.habilitationsService.getEtapes(),
+      this.habilitationsService.getEtapesByPlateforme(plateformeId),
       this.habilitationsService.getPlateformeRoles(plateformeId),
       this.usersService.getUsers()
     ]).pipe(

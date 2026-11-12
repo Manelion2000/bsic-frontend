@@ -25,3 +25,6 @@
   height: 16px;
   flex: 0 0 auto;
 }
+
+.skip-link{position:fixed;top:-100px;left:1rem;z-index:2000;background:#fff;padding:.8rem 1rem;border:2px solid #176d5d;border-radius:8px;color:#176d5d}.skip-link:focus{top:1rem}.menu-toggle{display:none}.content{min-width:0}.content:focus{outline:none}
+@media(max-width:850px){.menu-toggle{display:block;border:1px solid #c8d9cf;background:#fff;padding:.5rem .7rem;border-radius:8px;color:#176d5d;font-weight:600}.layout{display:block}.sidebar{display:none}.menu-open .sidebar{display:block;max-height:60vh;overflow:auto;margin-bottom:1rem}.topbar{flex-wrap:wrap}.topbar__brand{flex:1}.topbar__center{display:none}}

@@ -1,0 +1,60 @@
+<dialog #dialog class="workflow-dialog" aria-labelledby="workflow-title" (cancel)="close($event)">
+  <header class="workflow-header">
+    <div><span class="eyebrow">Vue workflow</span><h2 id="workflow-title">{{title}}</h2></div>
+    <div class="header-actions"><span class="mode-badge">{{editable?'Brouillon modifiable':hierarchical?'Ordre RH':'Lecture seule'}}</span><button type="button" class="icon-button" (click)="close()" [disabled]="busy" aria-label="Fermer le workflow">×</button></div>
+  </header>
+  <div class="workflow-message error" role="alert" *ngIf="error || localError">{{error || localError}}</div>
+  <div class="workflow-message success" role="status" *ngIf="notice">{{notice}}</div>
+  <div class="agent-toolbar" *ngIf="hierarchical && !readOnly">
+    <label>Agent<select [(ngModel)]="agentId" (ngModelChange)="changeAgent()" [disabled]="busy"><option value="">Choisir un agent</option><option *ngFor="let agent of config?.agents" [value]="agent.id">{{agent.nom}}</option></select></label>
+    <button type="button" class="btn btn--primary" (click)="simulate()" [disabled]="busy || !working?.id || !agentId">{{busy?'Chargement…':'Afficher le parcours'}}</button>
+  </div>
+  <div class="workflow-layout" [class.has-details]="!!selectedNode">
+    <section class="workflow-canvas" aria-label="Ordre des étapes">
+      <p class="canvas-hint">{{editable?'Glissez la poignée · Cliquez sur une étape':'Cliquez sur une étape pour voir ses détails'}}</p>
+      <ng-container *ngIf="nodes.length; else emptyWorkflow">
+        <div class="terminal"><span class="terminal-dot"></span>Soumission</div><div class="connector" aria-hidden="true"></div>
+        <ol class="workflow-chain">
+          <li *ngFor="let node of nodes; let i=index; trackBy: trackNode" class="workflow-node" [attr.data-workflow-index]="i"
+              [class.selected]="node.key===selectedKey" [class.drop-target]="dropIndex===i" [class.dragging]="dragIndex===i"
+              [class.approved]="node.state==='VALIDEE'" [class.current]="node.state==='COURANTE'" [class.rejected]="node.state==='REJETEE'"
+              (dragover)="dragOver($event,i)" (drop)="drop($event,i)">
+            <button *ngIf="editable" type="button" class="node-grip" draggable="true" [disabled]="busy" [attr.aria-label]="'Déplacer '+node.label"
+                    (dragstart)="startDrag($event,i)" (dragend)="endDrag()" (pointerdown)="pointerStart($event,i)"
+                    (pointermove)="pointerMove($event)" (pointerup)="pointerEnd($event)" (pointercancel)="pointerCancel()">⠿</button>
+            <button type="button" class="node-open" (click)="select(node)" [attr.aria-pressed]="node.key===selectedKey" [attr.aria-label]="'Détails de l’étape '+(i+1)+' : '+node.label">
+              <span class="node-number">{{i+1}}</span><span class="node-text"><strong>{{node.label}}</strong><small>{{node.subtitle}}</small></span>
+              <span class="node-status" *ngIf="node.state!=='PREVUE'">{{stateName(node.state)}}</span>
+              <span *ngIf="node.step?.fonctionsDemandeur?.length" class="conditional" title="Étape applicable selon la fonction du demandeur">◇</span><span class="node-chevron" aria-hidden="true">›</span>
+            </button>
+            <div *ngIf="editable" class="node-move"><button type="button" (click)="move(i,i-1)" [disabled]="busy || i===0" [attr.aria-label]="'Monter '+node.label">↑</button><button type="button" (click)="move(i,i+1)" [disabled]="busy || i===nodes.length-1" [attr.aria-label]="'Descendre '+node.label">↓</button></div>
+          </li>
+        </ol>
+        <div class="connector" aria-hidden="true"></div><div class="terminal"><span class="terminal-dot finish"></span>Décision finale</div>
+      </ng-container>
+      <ng-template #emptyWorkflow><div class="workflow-empty"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="3" width="24" height="14" rx="4"/><path d="M32 17v13m-15 0h30M17 30v10m30-10v10"/><rect x="5" y="40" width="24" height="17" rx="4"/><rect x="35" y="40" width="24" height="17" rx="4"/></svg><h3>{{readOnly?'Aucune étape à afficher':hierarchical?'Parcours de l’agent':'Votre première étape'}}</h3><p *ngIf="!readOnly">{{hierarchical?'Choisissez un agent pour afficher son circuit réel.':'Ajoutez une étape pour commencer.'}}</p><p *ngIf="hierarchical && !readOnly && !working?.id" class="muted">Enregistrez le circuit dans le studio avant de l’afficher.</p></div></ng-template>
+      <button *ngIf="editable" type="button" class="add-node" (click)="addStep()" [disabled]="busy || nodes.length>=30">＋ Ajouter une étape</button>
+      <p *ngIf="hierarchical && nodes.length" class="canvas-hint">Ordre défini par l’organigramme</p>
+    </section>
+    <aside class="workflow-details" *ngIf="selectedNode as node" aria-label="Détails de l’étape">
+      <div class="details-heading"><span class="eyebrow">Étape {{selectedIndex+1}}</span><button type="button" class="icon-button" (click)="selectedKey=undefined" aria-label="Fermer les détails">×</button></div><h3>{{node.label}}</h3>
+      <fieldset *ngIf="node.step && editable" [disabled]="busy">
+        <label>Nom<input [(ngModel)]="node.step.libelle" maxlength="150" required /></label>
+        <label>Validateurs<select [(ngModel)]="node.step.selection"><option value="FONCTION">Par fonction</option><option value="UTILISATEURS">Titulaires désignés</option></select></label>
+        <label>Fonction<select [(ngModel)]="node.step.fonction"><option [ngValue]="null">{{node.step.selection==='FONCTION'?'Choisir':'Aucune contrainte supplémentaire'}}</option><option *ngFor="let fn of config?.fonctions" [value]="fn">{{functionName(fn)}}</option></select></label>
+        <fieldset class="participants" *ngIf="node.step.selection==='UTILISATEURS'"><legend>Un seul accord suffit</legend><label *ngFor="let agent of config?.agents"><input type="checkbox" [checked]="node.step.utilisateurs.includes(agent.id)" (change)="toggle(node.step,'utilisateurs',agent.id,$any($event.target).checked)" />{{agent.nom}}</label></fieldset>
+        <details><summary>Périmètre</summary><label class="checkbox"><input type="checkbox" [(ngModel)]="node.step.departementDemandeur" (ngModelChange)="node.step.departementId=null;node.step.serviceId=null" />Département du demandeur</label>
+          <label *ngIf="!node.step.departementDemandeur">Département<select [(ngModel)]="node.step.departementId"><option [ngValue]="null">Tous</option><option *ngFor="let choice of config?.departements" [value]="choice.id">{{choice.nom}}</option></select></label>
+          <label *ngIf="!node.step.departementDemandeur">Service<select [(ngModel)]="node.step.serviceId"><option [ngValue]="null">Tous</option><option *ngFor="let choice of config?.services" [value]="choice.id">{{choice.nom}}</option></select></label>
+          <label>Agence<select [(ngModel)]="node.step.agenceId"><option [ngValue]="null">Toutes</option><option *ngFor="let choice of config?.agences" [value]="choice.id">{{choice.nom}}</option></select></label>
+        </details>
+        <details><summary>Conditions et délai</summary><p class="muted">Sans sélection, toutes les fonctions sont concernées.</p><label class="checkbox" *ngFor="let fn of config?.fonctions"><input type="checkbox" [checked]="node.step.fonctionsDemandeur.includes(fn)" (change)="toggle(node.step,'fonctionsDemandeur',fn,$any($event.target).checked)" />{{functionName(fn)}}</label><label>Délai indicatif (jours)<input type="number" [(ngModel)]="node.step.delaiJours" min="1" max="365" /></label></details>
+      </fieldset>
+      <ng-container *ngIf="node.step && !editable"><dl><dt>Sélection</dt><dd>{{node.step.selection==='FONCTION'?'Par fonction':'Titulaires désignés'}}</dd><dt>Fonction</dt><dd>{{node.step.fonction?functionName(node.step.fonction):'Aucune contrainte supplémentaire'}}</dd><dt>Département</dt><dd>{{node.step.departementDemandeur?'Département du demandeur':name(config?.departements,node.step.departementId)}}</dd><dt>Service</dt><dd>{{name(config?.services,node.step.serviceId)}}</dd><dt>Agence</dt><dd>{{name(config?.agences,node.step.agenceId)}}</dd><dt>Fonctions concernées</dt><dd><ng-container *ngFor="let fn of node.step.fonctionsDemandeur;let last=last">{{functionName(fn)}}{{last?'':', '}}</ng-container><ng-container *ngIf="!node.step.fonctionsDemandeur.length">Toutes</ng-container></dd><dt>Délai indicatif</dt><dd>{{node.step.delaiJours?node.step.delaiJours+' jour(s)':'Non défini'}}</dd></dl><ul class="validator-list"><li *ngFor="let id of node.step.utilisateurs">{{name(config?.agents,id)}}</li></ul></ng-container>
+      <ng-container *ngIf="node.snapshot as step"><span class="detail-status">{{stateName(node.state)}}</span><h4>Titulaires de l’étape</h4><ul class="validator-list"><li *ngFor="let validator of step.validateurs">{{validator.nom}}</li></ul><p class="muted" *ngIf="!step.validateurs.length">Aucun titulaire disponible.</p><dl *ngIf="step.nomSignataire"><dt>Signataire effectif</dt><dd>{{step.nomSignataire}}</dd><dt>Date de décision</dt><dd>{{step.dateDecision | date:'dd/MM/yyyy HH:mm'}}</dd></dl><p *ngIf="step.commentaire" class="decision-comment">{{step.commentaire}}</p></ng-container>
+      <details class="decision-history" *ngIf="selectedHistory.length"><summary>Historique de cette étape</summary><p *ngFor="let decision of selectedHistory"><strong>{{stateName(decision.decision)}}</strong> · {{decision.nomSignataire}}<small>{{decision.date | date:'dd/MM/yyyy HH:mm'}}</small><span *ngIf="decision.commentaire">{{decision.commentaire}}</span></p></details>
+    </aside>
+  </div>
+  <footer class="workflow-footer"><p>{{editable?(dirty?'Modifications non enregistrées':'Brouillon enregistré'):hierarchical?'Circuit calculé par le serveur':'Consultation du circuit'}}</p><div><button type="button" class="btn btn--light" (click)="close()" [disabled]="busy">{{editable && dirty?'Annuler':'Fermer'}}</button><button *ngIf="editable" type="button" class="btn btn--primary" (click)="save()" [disabled]="busy || !dirty">{{busy?'Enregistrement…':'Enregistrer le brouillon'}}</button></div></footer>
+  <p class="sr-only" aria-live="polite">{{announcement}}</p>
+</dialog>

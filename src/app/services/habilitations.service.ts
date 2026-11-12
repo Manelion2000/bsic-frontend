@@ -5,6 +5,7 @@ import { map, switchMap } from 'rxjs/operators';
 import { API_BASE_URL } from './api.config';
 
 export interface BaPlateformeDto {
+  version?: number;
   id?: string;
   code?: string;
   nom?: string;
@@ -213,6 +214,8 @@ export interface BaFicheHabilitationEtapeDto {
   idService?: string;
   nomService?: string;
   fonctionRequise?: string;
+  idRole?: string;
+  roleLibelle?: string;
   idValidateur?: string;
   nomCompletValidateur?: string;
   idDepartementValidateur?: string;
@@ -276,128 +279,33 @@ export interface CircuitResponseDto {
   etapes?: CircuitEtapeResponseDto[];
 }
 
-export interface BaAutorisationSortieRequestDto {
-  motif: string;
-  dateSortie: string;
-  typeStructure: 'DIRECTION' | 'SERVICE' | 'AGENCE';
-  idDirection?: string;
-  idService?: string;
-  idAgence?: string;
-}
-
-export interface BaAutorisationSortieDto {
+export interface BaValidationDelegationDto {
   id?: string;
-  motif?: string;
-  dateSortie?: string;
-  statutValidation?: 'EN_ATTENTE' | 'VALIDEE' | 'REJETEE';
-  commentaireValidation?: string;
-  dateValidation?: string;
-  idDemandeur?: string;
-  nomCompletDemandeur?: string;
-  idValidateur?: string;
-  nomCompletValidateur?: string;
-  typeStructure?: 'DIRECTION' | 'SERVICE' | 'AGENCE';
-  idDirection?: string;
-  nomDirection?: string;
+  idDelegant?: string;
+  nomDelegant?: string;
+  idDelegue?: string;
+  nomDelegue?: string;
+  roleCode?: string;
+  idDepartement?: string;
+  nomDepartement?: string;
   idService?: string;
   nomService?: string;
   idAgence?: string;
   nomAgence?: string;
-}
-
-export interface BaRepriseServiceRequestDto {
-  motifAbsence: string;
-  dateDebutConge: string;
-  dateFinConge: string;
-  dateReprise: string;
-}
-
-export interface BaRepriseServiceDto {
-  id?: string;
-  motifAbsence?: string;
-  dateDebutConge?: string;
-  dateFinConge?: string;
-  dateReprise?: string;
-  statutValidation?: 'EN_ATTENTE' | 'VALIDEE' | 'REJETEE';
-  commentaireValidation?: string;
-  dateValidation?: string;
-  createdDate?: string;
-  idDemandeur?: string;
-  matriculeDemandeur?: string;
-  nomCompletDemandeur?: string;
-  nomServiceDemandeur?: string;
-  nomDepartementDemandeur?: string;
-  idSignataire?: string;
-  nomCompletSignataire?: string;
-  nomDepartementSignataire?: string;
-  fonctionSignataire?: string;
-}
-
-export interface BaRhDemandesFilter {
-  idDemandeur?: string;
-  idDepartement?: string;
-  idService?: string;
-  idValidateur?: string;
-  statutValidation?: 'EN_ATTENTE' | 'VALIDEE' | 'REJETEE';
-  typeStructure?: 'DIRECTION' | 'SERVICE' | 'AGENCE';
   dateDebut?: string;
   dateFin?: string;
-}
-
-export interface BaRhDemandesStatsDto {
-  total: number;
-  enAttente: number;
-  validees: number;
-  rejetees: number;
-  parDepartement: BaStatItemDto[];
-  parService: BaStatItemDto[];
-  parDemandeur: BaStatItemDto[];
-  parValidateur: BaStatItemDto[];
-  parMois: BaStatItemDto[];
-  parTypeStructure: BaStatItemDto[];
-}
-
-export interface BaAutorisationSortieSuiviDto {
-  id?: string;
+  actif?: boolean;
   motif?: string;
-  dateSortie?: string;
-  createdDate?: string;
-  statutValidation?: 'EN_ATTENTE' | 'VALIDEE' | 'REJETEE';
-  commentaireValidation?: string;
-  dateValidation?: string;
-  idDemandeur?: string;
-  nomDemandeur?: string;
-  matriculeDemandeur?: string;
-  idDepartement?: string;
-  departement?: string;
-  idService?: string;
-  service?: string;
-  typeStructure?: 'DIRECTION' | 'SERVICE' | 'AGENCE';
-  structure?: string;
-  idValidateur?: string;
-  validateur?: string;
 }
 
-export interface BaRepriseServiceSuiviDto {
+export interface BaDgaPoleValidateurDto {
   id?: string;
-  motifAbsence?: string;
-  dateDebutConge?: string;
-  dateFinConge?: string;
-  dateReprise?: string;
-  nombreJoursAbsence?: number;
-  createdDate?: string;
-  statutValidation?: 'EN_ATTENTE' | 'VALIDEE' | 'REJETEE';
-  commentaireValidation?: string;
-  dateValidation?: string;
-  idDemandeur?: string;
-  nomDemandeur?: string;
-  matriculeDemandeur?: string;
-  idDepartement?: string;
-  departement?: string;
-  idService?: string;
-  service?: string;
-  idSignataire?: string;
-  signataire?: string;
+  pole?: 'OPERATIONS' | 'DEVELOPPEMENT';
+  idDga?: string;
+  nomDga?: string;
+  dateDebut?: string;
+  dateFin?: string;
+  actif?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -595,6 +503,7 @@ export class HabilitationsService {
           id: etape.departementId,
           idDepartement: etape.departementId,
           nomDepartement: etape.departementLibelle,
+          roleCode: etape.roleId || undefined,
           libelle: etape.departementLibelle || `Etape ${index + 1}`
         }))
       )
@@ -663,86 +572,6 @@ export class HabilitationsService {
     );
   }
 
-  createAutorisationSortie(dto: BaAutorisationSortieRequestDto): Observable<BaAutorisationSortieDto> {
-    return this.http.post<BaAutorisationSortieDto>(`${API_BASE_URL}/autorisation-sorties`, dto);
-  }
-
-  getMesDemandesAutorisationSortie(): Observable<BaAutorisationSortieDto[]> {
-    return this.http.get<BaAutorisationSortieDto[]>(`${API_BASE_URL}/autorisation-sorties/mes-demandes`);
-  }
-
-  getDemandesAutorisationSortieAValider(): Observable<BaAutorisationSortieDto[]> {
-    return this.http.get<BaAutorisationSortieDto[]>(`${API_BASE_URL}/autorisation-sorties/a-valider`);
-  }
-
-  validerAutorisationSortie(id: string, commentaire?: string): Observable<BaAutorisationSortieDto> {
-    const params = commentaire ? new HttpParams().set('commentaire', commentaire) : undefined;
-    return this.http.put<BaAutorisationSortieDto>(`${API_BASE_URL}/autorisation-sorties/${id}/valider`, null, { params });
-  }
-
-  rejeterAutorisationSortie(id: string, commentaire: string): Observable<BaAutorisationSortieDto> {
-    const params = new HttpParams().set('commentaire', commentaire);
-    return this.http.put<BaAutorisationSortieDto>(`${API_BASE_URL}/autorisation-sorties/${id}/rejeter`, null, { params });
-  }
-
-  downloadAutorisationSortiePdf(id: string): Observable<Blob> {
-    return this.http.get(`${API_BASE_URL}/reporting/autorisation-sorties/${id}`, { responseType: 'blob' });
-  }
-
-  createRepriseService(dto: BaRepriseServiceRequestDto): Observable<BaRepriseServiceDto> {
-    return this.http.post<BaRepriseServiceDto>(`${API_BASE_URL}/reprises-service`, dto);
-  }
-
-  getMesReprisesService(): Observable<BaRepriseServiceDto[]> {
-    return this.http.get<BaRepriseServiceDto[]>(`${API_BASE_URL}/reprises-service/mes-demandes`);
-  }
-
-  getReprisesServiceAValider(): Observable<BaRepriseServiceDto[]> {
-    return this.http.get<BaRepriseServiceDto[]>(`${API_BASE_URL}/reprises-service/a-valider`);
-  }
-
-  getRepriseService(id: string): Observable<BaRepriseServiceDto> {
-    return this.http.get<BaRepriseServiceDto>(`${API_BASE_URL}/reprises-service/${id}`);
-  }
-
-  validerRepriseService(id: string, commentaire?: string): Observable<BaRepriseServiceDto> {
-    const params = commentaire ? new HttpParams().set('commentaire', commentaire) : undefined;
-    return this.http.put<BaRepriseServiceDto>(`${API_BASE_URL}/reprises-service/${id}/valider`, null, { params });
-  }
-
-  rejeterRepriseService(id: string, commentaire: string): Observable<BaRepriseServiceDto> {
-    const params = new HttpParams().set('commentaire', commentaire);
-    return this.http.put<BaRepriseServiceDto>(`${API_BASE_URL}/reprises-service/${id}/rejeter`, null, { params });
-  }
-
-  downloadAttestationRepriseService(id: string): Observable<Blob> {
-    return this.http.get(`${API_BASE_URL}/reporting/reprises-service/${id}/attestation`, { responseType: 'blob' });
-  }
-
-  getStatistiquesAutorisations(filter: BaRhDemandesFilter = {}): Observable<BaRhDemandesStatsDto> {
-    return this.http.get<BaRhDemandesStatsDto>(`${API_BASE_URL}/autorisation-sorties/statistiques`, {
-      params: this.toRhParams(filter)
-    });
-  }
-
-  getSuiviAutorisations(filter: BaRhDemandesFilter = {}, page = 0, size = 20): Observable<PageResponse<BaAutorisationSortieSuiviDto>> {
-    return this.http.get<PageResponse<BaAutorisationSortieSuiviDto>>(`${API_BASE_URL}/autorisation-sorties/suivi`, {
-      params: this.toRhParams(filter).set('page', page).set('size', size).set('sort', 'createdDate,desc')
-    });
-  }
-
-  getStatistiquesReprises(filter: BaRhDemandesFilter = {}): Observable<BaRhDemandesStatsDto> {
-    return this.http.get<BaRhDemandesStatsDto>(`${API_BASE_URL}/reprises-service/statistiques`, {
-      params: this.toRhParams(filter)
-    });
-  }
-
-  getSuiviReprises(filter: BaRhDemandesFilter = {}, page = 0, size = 20): Observable<PageResponse<BaRepriseServiceSuiviDto>> {
-    return this.http.get<PageResponse<BaRepriseServiceSuiviDto>>(`${API_BASE_URL}/reprises-service/suivi`, {
-      params: this.toRhParams(filter).set('page', page).set('size', size).set('sort', 'createdDate,desc')
-    });
-  }
-
   getComptesPlateforme(statutCreation?: HabilitationCompteStatut): Observable<BaHabilitationComptePlateformeDto[]> {
     const params = statutCreation ? new HttpParams().set('statutCreation', statutCreation) : undefined;
     return this.http.get<BaHabilitationComptePlateformeDto[]>(`${API_BASE_URL}/habilitations/comptes-plateforme`, { params });
@@ -802,6 +631,38 @@ export class HabilitationsService {
     return this.http.get<PageResponse<BaPlateformeUsageRowDto>>(`${API_BASE_URL}/habilitations/suivi-plateformes`, { params });
   }
 
+  getValidationDelegations(): Observable<BaValidationDelegationDto[]> {
+    return this.http.get<BaValidationDelegationDto[]>(`${API_BASE_URL}/validation-delegations`);
+  }
+
+  createValidationDelegation(dto: BaValidationDelegationDto): Observable<BaValidationDelegationDto> {
+    return this.http.post<BaValidationDelegationDto>(`${API_BASE_URL}/validation-delegations`, dto);
+  }
+
+  updateValidationDelegation(id: string, dto: BaValidationDelegationDto): Observable<BaValidationDelegationDto> {
+    return this.http.put<BaValidationDelegationDto>(`${API_BASE_URL}/validation-delegations/${id}`, dto);
+  }
+
+  deleteValidationDelegation(id: string): Observable<void> {
+    return this.http.delete<void>(`${API_BASE_URL}/validation-delegations/${id}`);
+  }
+
+  getDgaPoleValidateurs(): Observable<BaDgaPoleValidateurDto[]> {
+    return this.http.get<BaDgaPoleValidateurDto[]>(`${API_BASE_URL}/dga-pole-validateurs`);
+  }
+
+  createDgaPoleValidateur(dto: BaDgaPoleValidateurDto): Observable<BaDgaPoleValidateurDto> {
+    return this.http.post<BaDgaPoleValidateurDto>(`${API_BASE_URL}/dga-pole-validateurs`, dto);
+  }
+
+  updateDgaPoleValidateur(id: string, dto: BaDgaPoleValidateurDto): Observable<BaDgaPoleValidateurDto> {
+    return this.http.put<BaDgaPoleValidateurDto>(`${API_BASE_URL}/dga-pole-validateurs/${id}`, dto);
+  }
+
+  deleteDgaPoleValidateur(id: string): Observable<void> {
+    return this.http.delete<void>(`${API_BASE_URL}/dga-pole-validateurs/${id}`);
+  }
+
   private toStatsParams(filter: BaPlateformeStatsFilter): HttpParams {
     let params = new HttpParams();
     Object.entries(filter || {}).forEach(([key, value]) => {
@@ -812,13 +673,4 @@ export class HabilitationsService {
     return params;
   }
 
-  private toRhParams(filter: BaRhDemandesFilter): HttpParams {
-    let params = new HttpParams();
-    Object.entries(filter || {}).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params = params.set(key, String(value));
-      }
-    });
-    return params;
-  }
 }

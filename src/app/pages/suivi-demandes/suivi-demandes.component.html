@@ -1,0 +1,34 @@
+<section class="section-stack suivi-page" [attr.aria-busy]="loading || opening">
+  <header class="page-header">
+    <div><span class="page-header__eyebrow">Consultation des circuits</span><h1 class="page-title">Suivi des demandes</h1><p class="page-subtitle">L’avancement des dossiers, de la soumission à la décision finale.</p></div>
+    <button type="button" class="btn btn--primary" (click)="reload(page)" [disabled]="loading || opening">{{loading?'Chargement…':'Actualiser'}}</button>
+  </header>
+  <p *ngIf="error" class="feedback" role="alert">{{error}}</p>
+  <ng-container *ngIf="configuration?.autorise && !configuration?.blocage">
+    <div class="scope-banner"><span class="scope-icon" aria-hidden="true">◉</span><div><strong>{{configuration?.perimetre==='GLOBAL'?'Tous les départements':configuration?.departement?.nom}}</strong><span>Suivi en lecture seule · Les contenus et justificatifs restent dans leurs espaces autorisés.</span></div><span class="scope-tag">{{configuration?.perimetre==='GLOBAL'?'Banque':'Mon département'}}</span></div>
+    <form class="card filters" (ngSubmit)="reload()">
+      <label>Rechercher un agent<input type="search" name="recherche" [(ngModel)]="recherche" maxlength="200" placeholder="Nom, matricule ou identifiant" /></label>
+      <label>Type de demande<select name="module" [(ngModel)]="module" (ngModelChange)="reload()" [disabled]="loading || opening"><option value="">Tous les types</option><option *ngFor="let m of configuration?.modules" [value]="m">{{modules[m] || m}}</option></select></label>
+      <label>État<select name="etat" [(ngModel)]="etat" (ngModelChange)="reload()" [disabled]="loading || opening"><option value="EN_ATTENTE">En validation ou en traitement</option><option value="">Tous les dossiers soumis</option><option *ngFor="let s of ['APPROUVEE','REJETEE','ANNULEE','RETIREE','REMPLACEE','TERMINEE']" [value]="s">{{states[s]}}</option></select></label>
+      <label *ngIf="configuration?.perimetre==='GLOBAL'">Département<select name="departementId" [(ngModel)]="departementId" (ngModelChange)="reload()" [disabled]="loading || opening"><option value="">Tous les départements</option><option *ngFor="let d of configuration?.departements" [value]="d.id">{{d.nom}}</option></select></label>
+      <button type="submit" class="btn btn--light" [disabled]="loading || opening">Rechercher</button>
+    </form>
+  </ng-container>
+  <p *ngIf="loading" role="status">Vérification du périmètre et chargement des demandes…</p>
+  <section *ngIf="data as result" class="card requests">
+    <div class="result-heading"><h2>{{result.totalElements}} dossier(s)</h2><span>Actualisés à {{updatedAt | date:'HH:mm'}}</span></div>
+    <p class="definition-note" *ngIf="etat==='EN_ATTENTE'">Les demandes attendent une décision ou un traitement informatique. Les brouillons personnels restent privés.</p>
+    <div class="table-wrap"><table class="table"><thead><tr><th>Agent et équipe</th><th>Demande</th><th>Soumission</th><th>Évolution</th><th></th></tr></thead><tbody>
+      <tr *ngFor="let row of result.content; trackBy: trackRow">
+        <td><strong>{{row.agent}}</strong><small>{{row.departement}} · {{row.service}}</small></td>
+        <td><strong>{{modules[row.module] || row.module}}</strong><small class="reference" [title]="row.id">{{row.id | slice:0:8}}</small><small *ngIf="row.debut">{{row.debut | date:'dd/MM/yyyy'}}<ng-container *ngIf="row.fin && row.fin!==row.debut"> → {{row.fin | date:'dd/MM/yyyy'}}</ng-container></small></td>
+        <td>{{row.soumiseLe | date:'dd/MM/yyyy'}}<small>{{row.soumiseLe | date:'HH:mm'}}</small></td>
+        <td><span class="state" [class.pending]="row.etat==='EN_ATTENTE'" [class.approved]="row.etat==='APPROUVEE'" [class.rejected]="row.etat==='REJETEE'">{{states[row.etat] || row.etat}}</span><small *ngIf="row.etapeActive">{{row.etapeActive}}</small><div class="progress" *ngIf="row.etapesTotal"><progress [value]="row.etapesValidees" [max]="row.etapesTotal" [attr.aria-label]="row.etapesValidees+' étapes approuvées sur '+row.etapesTotal"></progress><small>{{row.etapesValidees}} / {{row.etapesTotal}}</small></div></td>
+        <td><button type="button" class="btn btn--light" *ngIf="row.module!=='EXTRACTION';else extractionInfo" (click)="show(row)" [disabled]="opening || loading" [attr.aria-label]="'Voir l’évolution de la demande de '+row.agent">Voir l’évolution</button><ng-template #extractionInfo><small>Traitement informatique sans circuit de signature</small></ng-template></td>
+      </tr>
+      <tr *ngIf="!result.content.length"><td colspan="5" class="empty-state">Aucune demande ne correspond à ces filtres dans votre périmètre.</td></tr>
+    </tbody></table></div>
+    <div class="pagination" *ngIf="result.totalPages>1"><span>Page {{result.number+1}} sur {{result.totalPages}}</span><button type="button" class="btn btn--light" (click)="reload(page-1)" [disabled]="loading || opening || page===0">Précédent</button><button type="button" class="btn btn--light" (click)="reload(page+1)" [disabled]="loading || opening || page+1>=result.totalPages">Suivant</button></div>
+  </section>
+  <app-circuit-workflow [busy]="opening"></app-circuit-workflow>
+</section>

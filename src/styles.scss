@@ -654,26 +654,27 @@ textarea {
 
 .table {
   width: 100%;
+  min-width: 680px;
   border-collapse: separate;
   border-spacing: 0;
-  overflow: hidden;
   color: var(--bsic-text);
   background: #f8fbfe;
   border: 1px solid var(--bsic-border);
   border-radius: var(--bsic-radius-lg);
   box-shadow: var(--bsic-shadow-sm);
-  font-size: 0.86rem;
+  font-size: 0.76rem;
+  line-height: 1.25;
 }
 
 .table th {
   position: sticky;
   top: 0;
   z-index: 10;
-  padding: 0.8rem 0.9rem;
+  padding: 0.48rem 0.58rem;
   color: #ffffff;
   background: linear-gradient(180deg, #263953 0%, #1b2a40 100%);
   border-bottom: 1px solid #122035;
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 800;
   text-align: left;
   letter-spacing: 0;
@@ -681,10 +682,14 @@ textarea {
 }
 
 .table td {
-  padding: 0.82rem 0.9rem;
+  max-width: 220px;
+  padding: 0.45rem 0.58rem;
   color: #26364c;
   border-top: 1px solid #dde7f0;
   vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .table tbody tr {
@@ -705,18 +710,41 @@ textarea {
 
 .table td:last-child,
 .table th:last-child {
+  width: 1%;
+  min-width: 88px;
+  padding-right: 0.62rem;
+  text-align: right;
   white-space: nowrap;
 }
 
 .table-actions {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.35rem;
+  min-width: max-content;
+}
+
+.table-container,
+.data-table,
+.table-wrapper,
+.table-responsive {
+  max-width: 100%;
+  max-height: 640px;
+  overflow-x: auto !important;
+  overflow-y: auto;
+}
+
+.table-container .table,
+.data-table .table,
+.table-wrapper .table,
+.table-responsive .table {
+  margin: 0;
 }
 
 .icon-btn {
-  width: 34px;
-  height: 34px;
+  width: 29px;
+  height: 29px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -736,8 +764,8 @@ textarea {
 }
 
 .icon-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   stroke: currentColor;
 }
 
@@ -1263,3 +1291,6 @@ textarea.form-field__input {
     font-size: 1.25rem;
   }
 }
+
+/* Confort commun aux formulaires, listes et tableaux du portail. */
+:focus-visible{outline:3px solid #e1ae35;outline-offset:3px}input,select,textarea{scroll-margin-top:6rem}button:disabled{cursor:not-allowed}label{overflow-wrap:anywhere}.table-container,.table-wrapper{max-width:100%;overflow-x:auto}.dialog,.crud-modal{overscroll-behavior:contain}textarea{resize:vertical}.btn{min-height:38px}.page-subtitle{line-height:1.6}.content .table tr:focus-within{background:#f2f8f4}.content .empty-state{line-height:1.65}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

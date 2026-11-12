@@ -1,0 +1,105 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Gouvernance</span>
+      <h1 class="page-title">DGA par pole</h1>
+      <p class="page-subtitle">Configurer le DGA Operations et le DGA Developpement pour les validations.</p>
+    </div>
+    <button class="btn btn--primary" type="button" (click)="openCreateForm()">Nouvelle configuration</button>
+  </div>
+
+  <div class="feedback feedback--success" *ngIf="message">{{ message }}</div>
+
+  <div class="card workspace-panel">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Pole</th>
+            <th>DGA</th>
+            <th>Periode</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let config of configs" (click)="selectConfig(config)">
+            <td><span class="chip chip--small code-chip">{{ config.pole }}</span></td>
+            <td>{{ config.nomDga || config.idDga }}</td>
+            <td>{{ config.dateDebut }} - {{ config.dateFin || 'En cours' }}</td>
+            <td>
+              <span class="badge" [class.badge--success]="config.actif" [class.badge--error]="!config.actif">
+                {{ config.actif ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="table-actions">
+                <button class="icon-btn" type="button" title="Modifier" (click)="selectConfig(config); $event.stopPropagation();">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                </button>
+                <button class="icon-btn icon-btn--danger" type="button" title="Desactiver" (click)="desactiver(config); $event.stopPropagation();">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4h8v2" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+    <form class="card card--accent crud-modal" #dgaForm="ngForm" (click)="$event.stopPropagation()">
+      <div class="page-header" style="margin-bottom: 1rem;">
+        <div>
+          <span class="page-header__eyebrow">Affectation</span>
+          <h2 class="page-title" style="font-size: 1.35rem;">Configuration DGA</h2>
+          <p class="page-subtitle">Le DGA actif du pole valide les departements rattaches a ce pole.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label class="form-field">
+          Pole
+          <select [(ngModel)]="form.pole" name="pole" required>
+            <option *ngFor="let pole of poles" [value]="pole">{{ pole }}</option>
+          </select>
+        </label>
+        <label class="form-field">
+          DGA
+          <select [(ngModel)]="form.idDga" name="idDga" required>
+            <option value="">Selectionner</option>
+            <option *ngFor="let user of dgaUsers" [value]="user.id">{{ userLabel(user) }}</option>
+          </select>
+        </label>
+        <label class="form-field">
+          Date debut
+          <input type="date" [(ngModel)]="form.dateDebut" name="dateDebut" required />
+        </label>
+        <label class="form-field">
+          Date fin
+          <input type="date" [(ngModel)]="form.dateFin" name="dateFin" />
+        </label>
+        <label class="form-field">
+          Statut
+          <select [(ngModel)]="form.actif" name="actif">
+            <option [ngValue]="true">Active</option>
+            <option [ngValue]="false">Inactive</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn--primary" type="button" (click)="save(dgaForm)">Enregistrer</button>
+        <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+      </div>
+    </form>
+  </div>
+</section>

@@ -214,6 +214,15 @@
                            [(ngModel)]="etape.fonctionRequise" 
                            name="fonction_{{i}}"
                            placeholder="Fonction requise">
+
+                    <select class="form-field__input small"
+                            [(ngModel)]="etape.roleId"
+                            name="role_{{i}}">
+                      <option value="">Role optionnel</option>
+                      <option *ngFor="let role of roles" [value]="role.id">
+                        {{ role.nom }}
+                      </option>
+                    </select>
                   </div>
                 </div>
 
@@ -312,6 +321,7 @@
                     <th>Ordre</th>
                     <th>Type</th>
                     <th>Element selectionne</th>
+                    <th>Role</th>
                     <th>Statut</th>
                   </tr>
                 </thead>
@@ -323,6 +333,7 @@
                       <span *ngIf="etape.type === 'DEPARTEMENT'">{{ etape.nomDepartement || '-' }}</span>
                       <span *ngIf="etape.type === 'SERVICE'">{{ etape.nomService || '-' }}</span>
                     </td>
+                    <td>{{ getRoleLabel(etape) }}</td>
                     <td>
                       <span class="badge badge--orange" *ngIf="!etape.idEtapeDefinition">Incomplet</span>
                       <span class="badge" *ngIf="etape.idEtapeDefinition">Complet</span>

@@ -1,7 +1,7 @@
 <app-notification></app-notification>
 
 <div class="dialog-backdrop" *ngIf="errorMessage$ | async as errorMessage">
-  <div class="dialog">
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-label="Erreur">
     <div class="dialog__alert">
       <span class="dialog__alert-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -21,13 +21,15 @@
   </div>
 </div>
 
-<div *ngIf="isLoginPage; else appShell" class="login-route">
+<div *ngIf="isLoginPage || isPublicPage; else appShell" class="login-route">
   <router-outlet />
 </div>
 
 <ng-template #appShell>
-  <div class="app-shell">
+  <div class="app-shell" [class.menu-open]="menuOpen">
+    <a class="skip-link" href="#main-content">Aller au contenu</a>
     <header class="topbar">
+      <button class="menu-toggle" type="button" (click)="menuOpen=!menuOpen" [attr.aria-expanded]="menuOpen" aria-controls="main-menu">{{menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}}</button>
       <div class="topbar__brand">
         <img src="assets/images/bsic.png" alt="BSIC Burkina SA" />
         <div>
@@ -41,15 +43,16 @@
       </div>
       <div class="topbar__user">
         <div class="topbar__profile">
-          <span class="topbar__avatar" aria-hidden="true">KA</span>
+          <span class="topbar__avatar" aria-hidden="true">{{ currentUserInitials }}</span>
           <div class="topbar__user-copy">
-            <span class="topbar__user-label">KONE Aboubacar</span>
+            <span class="topbar__user-label">{{ currentUserFullName }}</span>
             <span class="topbar__user-status">
               <span class="topbar__user-dot"></span>
               Session active
             </span>
           </div>
         </div>
+        <a class="btn btn--light" routerLink="/mon-compte/signature">Ma signature</a>
         <button class="btn btn--light topbar__logout" type="button" (click)="logout()">Deconnexion</button>
       </div>
     </header>
@@ -62,12 +65,15 @@
     </nav>
 
     <div class="layout">
-      <aside class="sidebar">
+      <aside class="sidebar" id="main-menu" aria-label="Navigation principale">
+        <div class="sidebar__group"><div class="sidebar__title">Mon compte</div><a class="sidebar__link" routerLink="/mon-compte/signature" routerLinkActive="active">Ma signature</a></div>
         <div class="sidebar__group">
           <div class="sidebar__title">Utilisateurs</div>
           <a class="sidebar__link" routerLink="/users" routerLinkActive="active">Utilisateurs</a>
-          <a class="sidebar__link" routerLink="/roles" routerLinkActive="active">Roles</a>
-          <a class="sidebar__link" routerLink="/profils" routerLinkActive="active">Profils</a>
+          <a *ngIf="administrationEnabled" class="sidebar__link" routerLink="/administration/dg" routerLinkActive="active">Gestion du DG</a>
+          <a *ngIf="administrationEnabled" class="sidebar__link" routerLink="/administration/dga" routerLinkActive="active">Gestion des DGA</a>
+          <a *ngIf="administrationEnabled" class="sidebar__link" routerLink="/roles" routerLinkActive="active">Roles</a>
+          <a *ngIf="administrationEnabled" class="sidebar__link" routerLink="/profils" routerLinkActive="active">Profils</a>
         </div>
 
         <div class="sidebar__group">
@@ -75,13 +81,18 @@
           <a class="sidebar__link" routerLink="/annuaire/services" routerLinkActive="active">Services</a>
           <a class="sidebar__link" routerLink="/annuaire/departements" routerLinkActive="active">Departements</a>
           <a class="sidebar__link" routerLink="/annuaire/agences" routerLinkActive="active">Agences</a>
-          <a class="sidebar__link" routerLink="/annuaire/employes" routerLinkActive="active">Employes</a>
+          <a class="sidebar__link" routerLink="/annuaire/employes" routerLinkActive="active" *ngIf="administrationEnabled">Collaborateurs</a>
           <a class="sidebar__link" routerLink="/annuaire/annuaire" routerLinkActive="active">Annuaire global</a>
         </div>
 
-        <div class="sidebar__group">
+        <div class="sidebar__group" *ngIf="plateformesEnabled || extractionsEnabled">
+          <div class="sidebar__title">Informatique</div>
+          <a class="sidebar__link" routerLink="/informatique/plateformes" routerLinkActive="active" *ngIf="plateformesEnabled">Catalogue des plateformes</a>
+          <a class="sidebar__link" routerLink="/informatique/extractions" routerLinkActive="active" *ngIf="extractionsEnabled">Requêtes et extractions</a>
+        </div>
+
+        <div class="sidebar__group" *ngIf="habilitationsEnabled">
           <div class="sidebar__title">Habilitations</div>
-          <a class="sidebar__link" routerLink="/habilitations/plateformes" routerLinkActive="active">Plateformes</a>
           <a class="sidebar__link" routerLink="/habilitations/fiches" routerLinkActive="active">Fiches</a>
           <a class="sidebar__link" routerLink="/habilitations/validations" routerLinkActive="active">
             <span>Fiches en attente</span>
@@ -94,6 +105,8 @@
           <a class="sidebar__link" routerLink="/habilitations/reinitialisations-comptes" routerLinkActive="active">Reinitialisation comptes</a>
           <a class="sidebar__link" routerLink="/habilitations/statistiques-plateformes" routerLinkActive="active">Statistiques plateformes</a>
           <a class="sidebar__link" routerLink="/habilitations/suivi-plateformes" routerLinkActive="active">Suivi plateformes</a>
+          <a class="sidebar__link" routerLink="/habilitations/delegations-validation" routerLinkActive="active">Delegations validation</a>
+          <a class="sidebar__link" routerLink="/habilitations/dga-poles" routerLinkActive="active">DGA par pole</a>
           <a class="sidebar__link" routerLink="/habilitations-workflow" routerLinkActive="active">Workflow Habilitations</a>
           <a class="sidebar__link" routerLink="/bacircuit" routerLinkActive="active">
             <span class="sidebar__link-label">
@@ -114,6 +127,17 @@
               Workflow Circuits
             </span>
           </a>
+        </div>
+
+        <div class="sidebar__group">
+          <div class="sidebar__title">Démarches de la banque</div>
+          <a class="sidebar__link" routerLink="/demarches" routerLinkActive="active">Catalogue et mes dossiers</a>
+          <a class="sidebar__link" routerLink="/suivi-demandes" routerLinkActive="active" *ngIf="suiviDemandesEnabled">Suivi des demandes</a>
+          <a class="sidebar__link" routerLink="/circuits" routerLinkActive="active" *ngIf="processusConfigurationEnabled">Studio des circuits</a>
+        </div>
+
+        <div class="sidebar__group">
+          <div class="sidebar__title">Demandes RH</div>
           <a class="sidebar__link" routerLink="/autorisation-sorties" routerLinkActive="active">
             <span>Mes autorisations</span>
             <span class="sidebar__count-badge" *ngIf="pendingAutorisationsCount > 0">{{ pendingAutorisationsCount }}</span>
@@ -121,6 +145,11 @@
           <a class="sidebar__link" routerLink="/reprises-service" routerLinkActive="active">
             <span>Reprises de service</span>
             <span class="sidebar__count-badge" *ngIf="pendingReprisesCount > 0">{{ pendingReprisesCount }}</span>
+          </a>
+          <a class="sidebar__link" routerLink="/conges" routerLinkActive="active">Congés et planning</a>
+          <a class="sidebar__link" routerLink="/autorisations-absence" routerLinkActive="active">
+            <span>Autorisations d'absence</span>
+            <span class="sidebar__count-badge" *ngIf="pendingAbsencesCount > 0">{{ pendingAbsencesCount }}</span>
           </a>
         </div>
 
@@ -131,19 +160,21 @@
 
         <div class="sidebar__group">
           <div class="sidebar__title">Reporting</div>
-          <a class="sidebar__link" routerLink="/reporting" routerLinkActive="active">Reporting</a>
+          <a *ngIf="rhReportingEnabled" class="sidebar__link" routerLink="/reporting/rh-dashboard" routerLinkActive="active">Tableau de bord RH</a>
+          <a *ngIf="habilitationsEnabled" class="sidebar__link" routerLink="/reporting" routerLinkActive="active">Reporting habilitations</a>
           <a class="sidebar__link" routerLink="/reporting/autorisations-statistiques" routerLinkActive="active">Stats autorisations</a>
           <a class="sidebar__link" routerLink="/reporting/autorisations-suivi" routerLinkActive="active">Suivi autorisations</a>
           <a class="sidebar__link" routerLink="/reporting/reprises-statistiques" routerLinkActive="active">Stats reprises</a>
           <a class="sidebar__link" routerLink="/reporting/reprises-suivi" routerLinkActive="active">Suivi reprises</a>
         </div>
 
+        <a class="sidebar__link" routerLink="/changer-mot-de-passe" routerLinkActive="active">Mon mot de passe</a>
         <div class="sidebar__footer">
-          Connecte a bsic-service pour les donnees operationnelles.
+          Portail des démarches internes de la banque.
         </div>
       </aside>
 
-      <main class="content">
+      <main class="content" id="main-content" tabindex="-1">
         <router-outlet />
       </main>
     </div>

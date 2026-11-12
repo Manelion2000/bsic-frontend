@@ -13,3 +13,208 @@
          ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 
 [39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUser' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:133:14:
+[37m      133 │     if (!this.[32mcanManageUser[37m(user)) {
+          ╵               [32m~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUser' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:133:14:
+[37m      133 │     if (!this.[32mcanManageUser[37m(user)) {
+          ╵               [32m~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUsers' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:295:14:
+[37m      295 │     if (!this.[32mcanManageUsers[37m) {
+          ╵               [32m~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUser' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:327:14:
+[37m      327 │     if (!this.[32mcanManageUser[37m(this.form)) {
+          ╵               [32m~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG9: Property 'activateUser' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.html:156:67:
+[37m      156 │ ...icon-btn--edit" (click)="[32mactivateUser[37m(user); $event.stopPropag...
+          ╵                             [32m~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component UsersComponent.
+
+    src/app/pages/users/users.component.ts:19:15:
+[37m      19 │   templateUrl: [32m'./users.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUser' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:133:14:
+[37m      133 │     if (!this.[32mcanManageUser[37m(user)) {
+          ╵               [32m~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUsers' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:295:14:
+[37m      295 │     if (!this.[32mcanManageUsers[37m) {
+          ╵               [32m~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUser' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:327:14:
+[37m      327 │     if (!this.[32mcanManageUser[37m(this.form)) {
+          ╵               [32m~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUser' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:389:14:
+[37m      389 │     if (!this.[32mcanManageUser[37m(user)) {
+          ╵               [32m~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "activateUser" in class body[0m [duplicate-class-member]
+
+    src/app/pages/users/users.component.ts:995:4:
+[37m      995 │     [32mactivateUser[37m(user) {
+          ╵     [32m~~~~~~~~~~~~[0m
+
+  The original member "activateUser" is here:
+
+    src/app/pages/users/users.component.ts:876:4:
+[37m      876 │     [32mactivateUser[37m(user) {
+          ╵     [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUser' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:133:14:
+[37m      133 │     if (!this.[32mcanManageUser[37m(user)) {
+          ╵               [32m~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:292:2:
+[37m      292 │   [32mactivateUser[37m(user: BaUserDto): void {
+          ╵   [32m~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUsers' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:299:14:
+[37m      299 │     if (!this.[32mcanManageUsers[37m) {
+          ╵               [32m~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUser' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:331:14:
+[37m      331 │     if (!this.[32mcanManageUser[37m(this.form)) {
+          ╵               [32m~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'canManageUser' does not exist on type 'UsersComponent'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:393:14:
+[37m      393 │     if (!this.[32mcanManageUser[37m(user)) {
+          ╵               [32m~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:416:2:
+[37m      416 │   [32mactivateUser[37m(user: BaUserDto): void {
+          ╵   [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "activateUser" in class body[0m [duplicate-class-member]
+
+    src/app/pages/users/users.component.ts:995:4:
+[37m      995 │     [32mactivateUser[37m(user) {
+          ╵     [32m~~~~~~~~~~~~[0m
+
+  The original member "activateUser" is here:
+
+    src/app/pages/users/users.component.ts:876:4:
+[37m      876 │     [32mactivateUser[37m(user) {
+          ╵     [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:292:2:
+[37m      292 │   [32mactivateUser[37m(user: BaUserDto): void {
+          ╵   [32m~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:416:2:
+[37m      416 │   [32mactivateUser[37m(user: BaUserDto): void {
+          ╵   [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "activateUser" in class body[0m [duplicate-class-member]
+
+    src/app/pages/users/users.component.ts:1041:4:
+[37m      1041 │     [32mactivateUser[37m(user) {
+           ╵     [32m~~~~~~~~~~~~[0m
+
+  The original member "activateUser" is here:
+
+    src/app/pages/users/users.component.ts:922:4:
+[37m      922 │     [32mactivateUser[37m(user) {
+          ╵     [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:292:2:
+[37m      292 │   [32mactivateUser[37m(user: BaUserDto): void {
+          ╵   [32m~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:416:2:
+[37m      416 │   [32mactivateUser[37m(user: BaUserDto): void {
+          ╵   [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "activateUser" in class body[0m [duplicate-class-member]
+
+    src/app/pages/users/users.component.ts:1030:4:
+[37m      1030 │     [32mactivateUser[37m(user) {
+           ╵     [32m~~~~~~~~~~~~[0m
+
+  The original member "activateUser" is here:
+
+    src/app/pages/users/users.component.ts:911:4:
+[37m      911 │     [32mactivateUser[37m(user) {
+          ╵     [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:292:2:
+[37m      292 │   [32mactivateUser[37m(user: BaUserDto): void {
+          ╵   [32m~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/users/users.component.ts:416:2:
+[37m      416 │   [32mactivateUser[37m(user: BaUserDto): void {
+          ╵   [32m~~~~~~~~~~~~[0m
+
+[39m[22m

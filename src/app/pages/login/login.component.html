@@ -37,17 +37,18 @@
             <p>Identifiez-vous pour continuer.</p>
           </div>
         </div>
+        <a class="login-home" routerLink="/">Retour a l'accueil</a>
 
-        <form #loginForm="ngForm" class="login-form">
+        <form #loginForm="ngForm" class="login-form" (ngSubmit)="submit(loginForm)">
           <label class="form-field">
             Email
-            <input type="email" [(ngModel)]="form.username" name="username" required placeholder="prenom.nom@bsic.bf" />
+            <input type="email" [(ngModel)]="form.username" name="username" required maxlength="50" autocomplete="username" placeholder="prenom.nom@bsic.bf" />
             <span class="badge badge--orange" *ngIf="submitted && loginForm.controls['username']?.invalid">Requis</span>
           </label>
 
           <label class="form-field">
             Mot de passe
-            <input type="password" [(ngModel)]="form.password" name="password" required placeholder="Mot de passe" />
+            <input type="password" [(ngModel)]="form.password" name="password" required maxlength="72" autocomplete="current-password" placeholder="Mot de passe" />
             <span class="badge badge--orange" *ngIf="submitted && loginForm.controls['password']?.invalid">Requis</span>
           </label>
 
@@ -57,16 +58,15 @@
           </label>
 
           <div class="form-actions login-actions">
-            <button class="btn btn--primary" type="button" (click)="submit(loginForm)">
+            <button class="btn btn--primary" type="submit" [disabled]="loading">
               {{ loading ? 'Connexion...' : 'Se connecter' }}
             </button>
-            <button class="btn btn--outline" type="button" (click)="resetPassword()">
+            <button class="btn btn--outline" type="button" [disabled]="loading" (click)="resetPassword()">
               Reinitialiser
             </button>
           </div>
 
-          <div class="login-message" *ngIf="message">{{ message }}</div>
-          <a class="login-skip" routerLink="/users">Acceder sans connexion</a>
+          <div class="login-message" role="status" aria-live="polite" *ngIf="message">{{ message }}</div>
         </form>
       </div>
     </div>

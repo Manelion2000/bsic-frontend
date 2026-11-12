@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AnnuaireService, BaDepartementDto } from '../../services/annuaire.service';
 import { BaUserDto, UsersService } from '../../services/users.service';
-import { BaAutorisationSortieSuiviDto, BaRhDemandesFilter, HabilitationsService } from '../../services/habilitations.service';
+import { BaAutorisationSortieSuiviDto, BaRhDemandesFilter, RhDemandesService } from '../../services/rh-demandes.service';
 
 @Component({
   selector: 'app-autorisations-suivi',
@@ -23,7 +23,7 @@ export class AutorisationsSuiviComponent implements OnInit {
   loading = false;
   message = '';
 
-  constructor(private service: HabilitationsService, private usersService: UsersService, private annuaireService: AnnuaireService) {}
+  constructor(private service: RhDemandesService, private usersService: UsersService, private annuaireService: AnnuaireService) {}
 
   ngOnInit(): void {
     this.usersService.getUsers().subscribe((data) => (this.users = data || []));

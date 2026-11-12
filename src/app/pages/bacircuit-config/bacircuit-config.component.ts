@@ -7,6 +7,7 @@ import { forkJoin } from 'rxjs';
 import {
   HabilitationsService,
   BaPlateformeDto,
+  BaPlateformeRoleDto,
   CircuitEtapeRequestDto,
   CircuitRequestDto,
   CircuitResponseDto
@@ -31,6 +32,8 @@ export interface EtapeConfigDto {
   libelle: string;
   type: 'DEPARTEMENT' | 'SERVICE';
   fonctionRequise?: string;
+  roleId?: string;
+  roleLibelle?: string;
   nomDepartement?: string;
   nomService?: string;
   delaiValidation?: number;
@@ -59,6 +62,7 @@ export class BacircuitConfigComponent implements OnInit {
   plateformes: BaPlateformeDto[] = [];
   departements: BaDepartementDto[] = [];
   services: BaServiceDto[] = [];
+  roles: BaPlateformeRoleDto[] = [];
   templates: CircuitTemplateDto[] = [];
 
   loading = false;
@@ -137,6 +141,9 @@ export class BacircuitConfigComponent implements OnInit {
     this.annuaireService.getServices().subscribe({
       next: (services) => this.services = services || []
     });
+    this.habilitationsService.getPlateformeRoles('').subscribe({
+      next: (roles) => this.roles = roles || []
+    });
     this.loadTemplates();
   }
 
@@ -169,6 +176,7 @@ export class BacircuitConfigComponent implements OnInit {
       ordre: this.circuitForm.etapesConfig.length + 1,
       libelle: `Etape ${this.circuitForm.etapesConfig.length + 1}`,
       type: 'DEPARTEMENT',
+      roleId: '',
       delaiValidation: 7,
       obligatoire: true,
       conditions: ''
@@ -277,7 +285,7 @@ export class BacircuitConfigComponent implements OnInit {
       type: etape.type,
       departementId: etape.type === 'DEPARTEMENT' ? etape.idEtapeDefinition : null,
       serviceId: etape.type === 'SERVICE' ? etape.idEtapeDefinition : null,
-      roleId: null,
+      roleId: etape.roleId || null,
       ordre: index + 1,
       obligatoire: etape.obligatoire,
       actif: true,
@@ -388,6 +396,15 @@ export class BacircuitConfigComponent implements OnInit {
     etape.libelle = def?.label || etape.libelle;
   }
 
+  getRoleLabel(etape: EtapeConfigDto): string {
+    if (!etape.roleId) {
+      return '-';
+    }
+    return etape.roleLibelle
+      || this.roles.find((role) => role.id === etape.roleId)?.nom
+      || etape.roleId;
+  }
+
   private toCircuitConfig(circuit: CircuitResponseDto, plateforme?: BaPlateformeDto): CircuitConfigDto {
     return {
       id: circuit.id,
@@ -404,6 +421,8 @@ export class BacircuitConfigComponent implements OnInit {
         nomDepartement: etape.departementLibelle,
         nomService: etape.serviceLibelle,
         fonctionRequise: etape.fonctionRequise || undefined,
+        roleId: etape.roleId || undefined,
+        roleLibelle: etape.roleLibelle || undefined,
         delaiValidation: etape.delaiValidationJours || 7,
         obligatoire: etape.obligatoire ?? true,
         conditions: etape.conditions || ''

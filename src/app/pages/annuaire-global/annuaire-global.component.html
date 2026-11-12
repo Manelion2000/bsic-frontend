@@ -1,69 +1,66 @@
-<section class="section-stack">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Annuaire global</h1>
-      <p class="page-subtitle">Recherche transversale par service ou departement.</p>
+<section class="directory-shell section-stack">
+  <header class="directory-hero">
+    <div class="hero-brand" *ngIf="isPublicView"><img src="assets/images/bsic.png" alt="BSIC Burkina SA" /><span>BSIC Burkina SA</span></div>
+    <div class="hero-heading"><div><span class="eyebrow">{{isPublicView?'Contacts professionnels':'Les équipes de la banque'}}</span><h1>Annuaire des collaborateurs</h1><p>Trouvez la bonne personne, son équipe et ses coordonnées.</p></div>
+      <a *ngIf="isPublicView" class="btn btn--primary" routerLink="/login">Accéder au portail</a>
+      <a *ngIf="canManage && !isPublicView" class="btn btn--primary" routerLink="/annuaire/employes">Gérer les collaborateurs</a>
     </div>
-    <span class="chip">{{ message }}</span>
-  </div>
-
-  <div class="card">
-    <div class="form-grid">
-      <label class="form-field">
-        Departement
-        <select [(ngModel)]="filters.departementId">
-          <option value="">Tous</option>
-          <option *ngFor="let dep of departements" [value]="dep.id">{{ dep.nom }}</option>
-        </select>
-      </label>
-      <label class="form-field">
-        Service
-        <select [(ngModel)]="filters.serviceId">
-          <option value="">Tous</option>
-          <option *ngFor="let srv of services" [value]="srv.id">{{ srv.nom }}</option>
-        </select>
-      </label>
-      <label class="form-field">
-        Agence
-        <select [(ngModel)]="filters.agenceId">
-          <option value="">Toutes</option>
-          <option *ngFor="let agence of filteredAgences" [value]="agence.id">{{ agence.nom }}</option>
-        </select>
-      </label>
+  </header>
+  <app-directory-nav *ngIf="!isPublicView" [management]="canManage" />
+  <section class="card directory-search" aria-label="Rechercher un contact">
+    <label class="search-field"><span>Qui recherchez-vous ?</span><input type="search" name="directorySearch" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" maxlength="200" placeholder="Nom, prénom, téléphone, poste, fonction…" /></label>
+    <div class="filter-grid">
+      <label class="form-field">Département<select name="directoryDepartment" [(ngModel)]="filters.departementId" (ngModelChange)="onDepartmentChange()" [disabled]="refsLoading"><option value="">Tous les départements</option><option *ngFor="let d of departements" [value]="d.id">{{d.nom}}</option></select></label>
+      <label class="form-field">Service<select name="directoryService" [(ngModel)]="filters.serviceId" (ngModelChange)="onCriteriaChange()" [disabled]="refsLoading"><option value="">Tous les services</option><option *ngFor="let s of filteredServices" [value]="s.id">{{s.nom}}</option></select></label>
+      <label class="form-field">Agence<select name="directoryBranch" [(ngModel)]="filters.agenceId" (ngModelChange)="onCriteriaChange()" [disabled]="refsLoading"><option value="">Toutes les agences</option><option *ngFor="let a of filteredAgences" [value]="a.id">{{a.nom}}</option></select></label>
+      <label class="form-field">Fonction<select name="directoryFunction" [(ngModel)]="functionFilter" (ngModelChange)="pageIndex=0" [disabled]="!hasSearched || loading"><option value="">Toutes les fonctions</option><option *ngFor="let f of functions" [value]="f">{{functionLabel(f)}}</option></select></label>
     </div>
-    <div class="form-actions">
-      <button class="btn btn--primary" (click)="load()">Rechercher</button>
-      <button class="btn btn--outline" (click)="reset()">Reinitialiser</button>
+    <div class="search-footer"><span>Recherche par plusieurs mots, avec ou sans accents.</span><div class="actions"><button class="btn btn--light" type="button" (click)="reset()" [disabled]="!hasActiveCriteria">Effacer les filtres</button><button class="btn btn--primary" type="button" (click)="load()" [disabled]="loading || (isPublicView && !hasActiveCriteria)">{{loading?'Chargement…':'Actualiser les contacts'}}</button></div></div>
+    <p class="feedback error" role="alert" *ngIf="refsError">{{refsError}} <button class="btn btn--light" type="button" (click)="loadRefs()">Réessayer</button></p>
+  </section>
+  <p class="feedback error" role="alert" *ngIf="message">{{message}} <button class="btn btn--light" type="button" (click)="load()">Réessayer</button></p>
+  <div class="loading-state" role="status" *ngIf="loading"><span class="spinner spinner--dark" aria-hidden="true"></span>Chargement de l’annuaire…</div>
+  <ng-container *ngIf="hasSearched && !loading">
+    <div class="results-toolbar">
+      <div class="results-summary" role="status" aria-live="polite"><strong>{{matchingContacts.length}} contact(s)</strong><span>{{departmentCount}} département(s) · {{serviceCount}} service(s)</span></div>
+      <div class="results-controls">
+        <label>Trier par <select name="directorySort" [(ngModel)]="sort" (ngModelChange)="pageIndex=0"><option value="name">Nom</option><option value="department">Département puis nom</option></select></label>
+        <div class="view-switch" role="group" aria-label="Présentation des contacts"><button type="button" [class.active]="view==='cards'" [attr.aria-pressed]="view==='cards'" (click)="view='cards'">Cartes</button><button type="button" [class.active]="view==='list'" [attr.aria-pressed]="view==='list'" (click)="view='list'">Liste</button></div>
+      </div>
     </div>
-  </div>
-
-  <div class="card" *ngFor="let dep of annuaire">
-    <div class="soft-panel">
-      <div style="font-weight: 700; margin-bottom: 0.6rem;">{{ dep.nom }}</div>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Prenom</th>
-            <th>Fonction</th>
-            <th>Service</th>
-            <th>Agence</th>
-            <th>Poste</th>
-            <th>Telephone</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let agent of dep.agents">
-            <td>{{ agent.nom }}</td>
-            <td>{{ agent.prenom }}</td>
-            <td>{{ agent.fonction }}</td>
-            <td>{{ agent.nomService }}</td>
-            <td>{{ agent.nomAgence }}</td>
-            <td>{{ agent.numeroPoste }}</td>
-            <td>{{ agent.telephoneSecondaire }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="contacts-grid" *ngIf="view==='cards'">
+      <article class="contact-card" *ngFor="let a of pagedContacts; trackBy:trackContact">
+        <div class="contact-heading"><span class="avatar" aria-hidden="true">{{initials(a.prenom,a.nom)}}</span><div><button class="contact-name" type="button" (click)="openContact(a)">{{fullName(a)}}</button><p>{{functionLabel(a.fonction)}}</p></div></div>
+        <div class="organisation"><strong>{{a.departementNom}}</strong><span *ngIf="a.nomService">{{a.nomService}}</span><span *ngIf="a.nomAgence" class="location">{{a.nomAgence}}</span></div>
+        <div class="contact-methods">
+          <a *ngIf="emailLink(a.emailPro || a.email) as link" [href]="link">{{a.emailPro || a.email}}</a>
+          <a *ngIf="phoneLink(a.telephone) as link" [href]="link">Tél. {{a.telephone}}</a>
+          <span *ngIf="a.numeroPoste">Poste {{a.numeroPoste}}</span>
+          <span *ngIf="!a.email && !a.emailPro && !a.telephone && !a.numeroPoste" class="muted">Coordonnées non renseignées</span>
+        </div>
+        <button class="profile-link" type="button" (click)="openContact(a)">Voir la fiche contact <span aria-hidden="true">→</span></button>
+      </article>
     </div>
-  </div>
+    <div class="directory-table card" *ngIf="view==='list' && matchingContacts.length">
+      <table class="table"><caption class="sr-only">Contacts correspondant à la recherche</caption><thead><tr><th scope="col">Collaborateur</th><th scope="col">Organisation</th><th scope="col">Coordonnées</th><th scope="col">Fiche</th></tr></thead><tbody>
+        <tr *ngFor="let a of pagedContacts; trackBy:trackContact"><td><div class="contact-heading"><span class="avatar small" aria-hidden="true">{{initials(a.prenom,a.nom)}}</span><div><button class="contact-name" type="button" (click)="openContact(a)">{{fullName(a)}}</button><small>{{functionLabel(a.fonction)}}</small></div></div></td><td><strong>{{a.departementNom}}</strong><small>{{a.nomService || 'Service non renseigné'}}</small><small *ngIf="a.nomAgence">{{a.nomAgence}}</small></td><td><div class="contact-methods"><a *ngIf="emailLink(a.emailPro || a.email) as link" [href]="link">{{a.emailPro || a.email}}</a><a *ngIf="phoneLink(a.telephone) as link" [href]="link">{{a.telephone}}</a><span *ngIf="a.numeroPoste">Poste {{a.numeroPoste}}</span></div></td><td><button class="btn btn--light" type="button" (click)="openContact(a)" [attr.aria-label]="'Voir la fiche de '+fullName(a)">Consulter</button></td></tr>
+      </tbody></table>
+    </div>
+    <div class="empty-state" *ngIf="!matchingContacts.length"><span class="empty-symbol" aria-hidden="true">⌕</span><h2>Aucun contact trouvé</h2><p>Essayez un autre nom ou élargissez les filtres.</p><button class="btn btn--light" type="button" (click)="reset()">Effacer les filtres</button></div>
+    <nav class="pagination" aria-label="Pages des contacts" *ngIf="matchingContacts.length">
+      <label>Contacts par page <select name="directoryPageSize" [(ngModel)]="pageSize" (ngModelChange)="pageIndex=0"><option [ngValue]="12">12</option><option [ngValue]="24">24</option><option [ngValue]="48">48</option></select></label>
+      <div class="actions"><button class="btn btn--light" type="button" [disabled]="pageIndex===0" (click)="pageIndex=pageIndex-1">Précédent</button><span>Page {{pageIndex+1}} / {{totalPages}}</span><button class="btn btn--light" type="button" [disabled]="pageIndex+1>=totalPages" (click)="pageIndex=pageIndex+1">Suivant</button></div>
+    </nav>
+  </ng-container>
+  <section class="empty-state welcome" *ngIf="isPublicView && !hasSearched && !loading && !message"><span class="empty-symbol" aria-hidden="true">⌕</span><h2>Un contact, en quelques secondes</h2><p>Saisissez un nom ou choisissez un département, un service ou une agence.</p><div class="welcome-counts"><span>{{departements.length}} départements</span><span>{{services.length}} services</span><span>{{agences.length}} agences</span></div></section>
 </section>
+<dialog #contactDialog class="contact-dialog" aria-labelledby="contact-title" (cancel)="$event.preventDefault();closeContact()">
+  <ng-container *ngIf="selected as a">
+    <header><div class="contact-heading"><span class="avatar large" aria-hidden="true">{{initials(a.prenom,a.nom)}}</span><div><span class="eyebrow">Fiche contact</span><h2 id="contact-title">{{fullName(a)}}</h2><p>{{functionLabel(a.fonction)}}</p></div></div><button class="close-button" type="button" aria-label="Fermer la fiche contact" (click)="closeContact()">×</button></header>
+    <div class="contact-dialog-body">
+      <h3>Organisation</h3><dl><div><dt>Département</dt><dd>{{a.departementNom}}</dd></div><div><dt>Service</dt><dd>{{a.nomService || 'Non renseigné'}}</dd></div><div *ngIf="a.nomAgence"><dt>Agence</dt><dd>{{a.nomAgence}}</dd></div></dl>
+      <h3>Coordonnées</h3><dl><div><dt>Adresse e-mail</dt><dd><a *ngIf="emailLink(a.emailPro || a.email) as link; else plainEmail" [href]="link">{{a.emailPro || a.email}}</a><ng-template #plainEmail>{{a.emailPro || a.email || 'Non renseignée'}}</ng-template></dd></div><div><dt>Téléphone</dt><dd><a *ngIf="phoneLink(a.telephone) as link; else plainPhone" [href]="link">{{a.telephone}}</a><ng-template #plainPhone>{{a.telephone || 'Non renseigné'}}</ng-template></dd></div><div *ngIf="a.numeroPoste"><dt>Poste</dt><dd>{{a.numeroPoste}}</dd></div><div *ngIf="!isPublicView && a.telephoneSecondaire"><dt>Téléphone secondaire</dt><dd><a [href]="phoneLink(a.telephoneSecondaire)">{{a.telephoneSecondaire}}</a></dd></div></dl>
+      <p class="feedback" role="status" *ngIf="feedback">{{feedback}}</p>
+    </div><footer><button class="btn btn--light" type="button" (click)="copyContact()">Copier les coordonnées</button><button class="btn btn--primary" type="button" (click)="closeContact()">Fermer</button></footer>
+  </ng-container>
+</dialog>

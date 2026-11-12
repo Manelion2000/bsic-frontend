@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, combineLatest, throwError } from 'rxjs';
+import { Observable, BehaviorSubject, combineLatest, throwError, of } from 'rxjs';
 import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { UsersService, BaUserDto, BaRoleDto, RoleAssignmentResult } from './users.service';
 import { RolesService } from './roles.service';
 import { NotificationService } from './notification.service';
+import { extractErrorMessage } from '../shared/error.utils';
 
 export interface UserRoleState {
   userId: string;
@@ -49,6 +50,9 @@ export class UserRoleManagementService {
       }));
     }
 
+    const current = this.userRoleStates.get(userId)!;
+    current.next({...current.value, loading: true, error: null});
+
     return combineLatest([
       this.rolesService.getRoles(),
       this.usersService.getUserRoles(userId)
@@ -79,11 +83,11 @@ export class UserRoleManagementService {
           this.userRoleStates.get(userId)?.next({
             ...state,
             loading: false,
-            error: 'Erreur lors du chargement des rôles'
+            error: extractErrorMessage(error, 'Erreur lors du chargement des rôles')
           });
         }
-        this.notificationService.showError('Erreur de chargement', 'Impossible de charger les rôles utilisateur');
-        return throwError(error);
+        this.notificationService.showError('Erreur de chargement', extractErrorMessage(error, 'Impossible de charger les rôles utilisateur'));
+        return throwError(() => error);
       })
     );
   }
@@ -91,7 +95,7 @@ export class UserRoleManagementService {
   // Observer l'état d'un utilisateur
   getUserRoleState(userId: string): Observable<UserRoleState> {
     if (!this.userRoleStates.has(userId)) {
-      return this.initializeUserRoleState(userId);
+      this.userRoleStates.set(userId, new BehaviorSubject<UserRoleState>({userId, user: null, availableRoles: [], assignedRoles: [], loading: true, error: null}));
     }
     return this.userRoleStates.get(userId)!.asObservable();
   }
@@ -104,6 +108,8 @@ export class UserRoleManagementService {
         switchMap(() => this.addRoleToUser(userId, roleId, userName))
       );
     }
+
+    if (state.loading) return of({success: false, message: 'Une opération sur les rôles est déjà en cours.'});
 
     // Validation locale
     if (state.assignedRoles.some(role => role.id === roleId)) {
@@ -125,37 +131,31 @@ export class UserRoleManagementService {
       status: 'pending'
     });
 
-    // Mettre à jour l'état localement (optimistic update)
+    // Afficher uniquement les droits confirmés par le serveur.
     const roleToAdd = state.availableRoles.find(role => role.id === roleId);
-    if (roleToAdd) {
-      const updatedState = {
-        ...state,
-        assignedRoles: [...state.assignedRoles, roleToAdd],
-        availableRoles: state.availableRoles.filter(role => role.id !== roleId)
-      };
-      this.userRoleStates.get(userId)?.next(updatedState);
-    }
+    this.userRoleStates.get(userId)?.next({...state, loading: true, error: null});
 
     return this.usersService.addRoleToUser(userId, roleId).pipe(
       tap(result => {
         if (result.success) {
+          this.confirmRoles(userId, result.user);
           this.notificationService.showSuccess(
             'Rôle assigné', 
             `Le rôle ${roleToAdd?.libelle || roleId} a été assigné à ${userName || 'l\'utilisateur'} avec succès`
           );
           this.updateOperationStatus(userId, 'add', roleId, 'success', result.message);
         } else {
-          // Rollback en cas d'erreur
-          this.rollbackRoleAddition(userId, roleId);
+          this.failOperation(userId, result.message);
           this.notificationService.showError('Échec d\'assignation', result.message);
           this.updateOperationStatus(userId, 'add', roleId, 'error', result.message);
         }
       }),
       catchError(error => {
-        this.rollbackRoleAddition(userId, roleId);
-        this.notificationService.showError('Erreur système', 'Une erreur technique est survenue lors de l\'assignation du rôle');
-        this.updateOperationStatus(userId, 'add', roleId, 'error', error.message);
-        return throwError(error);
+        const message = extractErrorMessage(error, 'Impossible d’assigner ce rôle.');
+        this.failOperation(userId, message);
+        this.notificationService.showError('Échec d’assignation', message);
+        this.updateOperationStatus(userId, 'add', roleId, 'error', message);
+        return throwError(() => error);
       })
     );
   }
@@ -168,6 +168,8 @@ export class UserRoleManagementService {
         switchMap(() => this.removeRoleFromUser(userId, roleId, userName))
       );
     }
+
+    if (state.loading) return of({success: false, message: 'Une opération sur les rôles est déjà en cours.'});
 
     // Validation locale
     const roleToRemove = state.assignedRoles.find(role => role.id === roleId);
@@ -190,34 +192,29 @@ export class UserRoleManagementService {
       status: 'pending'
     });
 
-    // Optimistic update
-    const updatedState = {
-      ...state,
-      assignedRoles: state.assignedRoles.filter(role => role.id !== roleId),
-      availableRoles: [...state.availableRoles, roleToRemove]
-    };
-    this.userRoleStates.get(userId)?.next(updatedState);
+    this.userRoleStates.get(userId)?.next({...state, loading: true, error: null});
 
     return this.usersService.removeRoleFromUser(userId, roleId).pipe(
       tap(result => {
         if (result.success) {
+          this.confirmRoles(userId, result.user);
           this.notificationService.showSuccess(
             'Rôle supprimé', 
             `Le rôle ${roleToRemove.libelle || roleId} a été retiré de ${userName || 'l\'utilisateur'} avec succès`
           );
           this.updateOperationStatus(userId, 'remove', roleId, 'success', result.message);
         } else {
-          // Rollback en cas d'erreur
-          this.rollbackRoleRemoval(userId, roleId, roleToRemove);
+          this.failOperation(userId, result.message);
           this.notificationService.showError('Échec de suppression', result.message);
           this.updateOperationStatus(userId, 'remove', roleId, 'error', result.message);
         }
       }),
       catchError(error => {
-        this.rollbackRoleRemoval(userId, roleId, roleToRemove);
-        this.notificationService.showError('Erreur système', 'Une erreur technique est survenue lors de la suppression du rôle');
-        this.updateOperationStatus(userId, 'remove', roleId, 'error', error.message);
-        return throwError(error);
+        const message = extractErrorMessage(error, 'Impossible de retirer ce rôle.');
+        this.failOperation(userId, message);
+        this.notificationService.showError('Échec du retrait', message);
+        this.updateOperationStatus(userId, 'remove', roleId, 'error', message);
+        return throwError(() => error);
       })
     );
   }
@@ -231,8 +228,10 @@ export class UserRoleManagementService {
       );
     }
 
+    if (state.loading) return of({success: false, message: 'Une opération sur les rôles est déjà en cours.'});
+
     // Validation
-    const validRoleIds = roleIds.filter(roleId => 
+    const validRoleIds = [...new Set(roleIds)].filter(roleId =>
       state.availableRoles.some(role => role.id === roleId)
     );
 
@@ -247,16 +246,11 @@ export class UserRoleManagementService {
       });
     }
 
-    // Optimistic update
-    const rolesToAdd = state.availableRoles.filter(role => validRoleIds.includes(role.id!));
-    const updatedState = {
-      ...state,
-      assignedRoles: [...state.assignedRoles, ...rolesToAdd],
-      availableRoles: state.availableRoles.filter(role => !validRoleIds.includes(role.id!))
-    };
-    this.userRoleStates.get(userId)?.next(updatedState);
+    this.userRoleStates.get(userId)?.next({...state, loading: true, error: null});
 
     return this.usersService.assignMultipleRoles(userId, validRoleIds).pipe(
+      // Certains ajouts peuvent réussir et d'autres être refusés : réconcilier le résultat.
+      switchMap(result => this.initializeUserRoleState(userId).pipe(map(() => result))),
       tap(result => {
         if (result.success) {
           this.notificationService.showSuccess(
@@ -264,15 +258,15 @@ export class UserRoleManagementService {
             `${validRoleIds.length} rôle(s) ont été assigné(s) à ${userName || 'l\'utilisateur'} avec succès`
           );
         } else {
-          // Rollback complet
-          this.initializeUserRoleState(userId);
+          this.failOperation(userId, result.message);
           this.notificationService.showError('Échec d\'assignation multiple', result.message);
         }
       }),
       catchError(error => {
-        this.initializeUserRoleState(userId);
-        this.notificationService.showError('Erreur système', 'Une erreur technique est survenue lors de l\'assignation multiple des rôles');
-        return throwError(error);
+        const message = extractErrorMessage(error, 'Impossible de confirmer les rôles assignés.');
+        this.failOperation(userId, message);
+        this.notificationService.showError('Échec d’assignation multiple', message);
+        return throwError(() => error);
       })
     );
   }
@@ -308,30 +302,17 @@ export class UserRoleManagementService {
     }
   }
 
-  private rollbackRoleAddition(userId: string, roleId: string): void {
-    const state = this.userRoleStates.get(userId)?.value;
-    if (state) {
-      const addedRole = state.assignedRoles.find(role => role.id === roleId);
-      if (addedRole) {
-        const updatedState = {
-          ...state,
-          assignedRoles: state.assignedRoles.filter(role => role.id !== roleId),
-          availableRoles: [...state.availableRoles, addedRole]
-        };
-        this.userRoleStates.get(userId)?.next(updatedState);
-      }
-    }
+  private confirmRoles(userId: string, user?: BaUserDto): void {
+    const subject = this.userRoleStates.get(userId);
+    if (!subject || !user) return;
+    const state = subject.value;
+    const assignedRoles = user.roles || [];
+    const catalogue = [...state.availableRoles, ...state.assignedRoles];
+    subject.next({...state, user, assignedRoles, availableRoles: catalogue.filter(role => !assignedRoles.some(assigned => assigned.id === role.id)), loading: false, error: null});
   }
 
-  private rollbackRoleRemoval(userId: string, roleId: string, roleToRemove: BaRoleDto): void {
-    const state = this.userRoleStates.get(userId)?.value;
-    if (state) {
-      const updatedState = {
-        ...state,
-        assignedRoles: [...state.assignedRoles, roleToRemove],
-        availableRoles: state.availableRoles.filter(role => role.id !== roleId)
-      };
-      this.userRoleStates.get(userId)?.next(updatedState);
-    }
+  private failOperation(userId: string, error: string): void {
+    const subject = this.userRoleStates.get(userId);
+    if (subject) subject.next({...subject.value, loading: false, error});
   }
 }

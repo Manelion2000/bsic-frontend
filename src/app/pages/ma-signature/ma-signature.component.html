@@ -1,0 +1,26 @@
+<section class="section-stack signature-page">
+  <div class="page-header"><div><span class="page-header__eyebrow">Mon compte</span><h1 class="page-title">Ma signature</h1><p class="page-subtitle">Votre signature manuscrite, associée à votre compte et à vos validations.</p></div><span *ngIf="status" class="badge" [class.ready]="status.presente">{{status.presente ? 'Prête pour vos validations' : 'À enregistrer'}}</span></div>
+  <p class="feedback error" role="alert" *ngIf="error">{{error}} <button class="text-button" (click)="load()" [disabled]="loading || busy">Réessayer le chargement</button></p>
+  <p class="feedback success" role="status" *ngIf="success">{{success}}</p>
+  <p *ngIf="loading" role="status">Chargement de votre signature…</p>
+  <div class="signature-layout" *ngIf="!loading && status">
+    <section class="card signature-card" aria-labelledby="signature-title">
+      <div class="card-heading"><h2 id="signature-title">{{selected ? 'Nouvelle signature à enregistrer' : 'Signature enregistrée'}}</h2><span *ngIf="selected" class="badge">Aperçu avant enregistrement</span></div>
+      <div class="preview" [class.empty]="!displayedPreview">
+        <img *ngIf="displayedPreview" [src]="displayedPreview" [alt]="selected ? 'Aperçu normalisé de la signature sélectionnée' : 'Votre signature enregistrée'" />
+        <p *ngIf="previewLoading" role="status">Contrôle du format et des dimensions de l'image…</p>
+        <div *ngIf="!displayedPreview && !previewLoading"><span class="pen" aria-hidden="true">✍</span><strong>{{selected ? 'Image à vérifier' : 'Aucune signature enregistrée'}}</strong><p>Importez une photo ou un scan lisible de votre signature.</p></div>
+      </div>
+      <p class="metadata" *ngIf="selected">{{selected.name}} · {{selected.size / 1024 | number:'1.0-0'}} Ko</p>
+      <p class="metadata" *ngIf="!selected && status.miseAJour">Dernière mise à jour : {{status.miseAJour | date:'dd/MM/yyyy à HH:mm'}}</p>
+      <label class="upload-zone" [class.disabled]="busy"><strong>{{status.presente ? 'Choisir une nouvelle signature' : 'Choisir mon image de signature'}}</strong><span>{{formats}} · 2 Mo maximum</span><span>De 20 × 10 pixels à 4096 pixels par côté, dans la limite de 12 mégapixels.</span><input aria-label="Choisir une image de signature" type="file" [accept]="acceptedFiles" (change)="choose($event)" [disabled]="busy" /></label>
+      <p class="metadata">Sur les actes : 60 × 20 mm maximum, avec conservation des proportions et sans agrandissement des petites images.</p>
+      <div class="actions" *ngIf="selected"><button type="button" class="btn btn--primary" (click)="save()" [disabled]="busy || previewLoading || !preview">{{busy ? 'Enregistrement…' : 'Enregistrer ma signature'}}</button><button type="button" class="btn btn--light" (click)="cancelSelection()" [disabled]="busy">Annuler</button></div>
+      <div class="remove-panel" *ngIf="status.presente && !selected">
+        <button type="button" class="text-button danger" *ngIf="!confirmRemoval" (click)="confirmRemoval=true" [disabled]="busy">Retirer ma signature</button>
+        <div *ngIf="confirmRemoval" role="group" aria-label="Confirmation du retrait"><p>Retirer votre signature ? Vous devrez en enregistrer une nouvelle pour approuver d'autres demandes. Les actes déjà validés conservent leur signature.</p><div class="actions"><button type="button" class="btn danger" (click)="remove()" [disabled]="busy">Confirmer le retrait</button><button type="button" class="btn btn--light" (click)="confirmRemoval=false" [disabled]="busy">Conserver ma signature</button></div></div>
+      </div>
+    </section>
+    <aside class="card help-card"><span class="page-header__eyebrow">Comment préparer votre signature</span><h2>Un visa lisible sur chaque acte</h2><ol><li>Signez sur une feuille blanche, avec un stylo noir ou bleu.</li><li>Photographiez ou scannez la signature, bien à plat et sans ombre.</li><li>Importez l'image, vérifiez l'aperçu puis enregistrez-la.</li></ol><p>Les marges blanches sont recadrées et le fond blanc devient transparent lors de l'enregistrement.</p><div class="information"><strong>Vous gardez le contrôle</strong><p>Seul votre compte peut consulter, remplacer ou retirer cette image. Elle est copiée sur l'acte quand vous approuvez une étape, avec votre identité et la date de validation.</p><p>Un remplacement n'affecte pas vos validations précédentes. Un refus n'appose aucune signature d'approbation.</p></div></aside>
+  </div>
+</section>

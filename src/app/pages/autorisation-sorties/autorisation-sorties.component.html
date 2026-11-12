@@ -3,7 +3,7 @@
     <div>
       <span class="page-header__eyebrow">Workflow interne</span>
       <h1 class="page-title">Autorisations de sortie</h1>
-      <p class="page-subtitle">Demandeur: creez vos demandes. Superieur: validez/rejetez.</p>
+      <p class="page-subtitle">Demandes et validations selon la fonction dans l’organigramme.</p>
     </div>
     <span class="chip" *ngIf="message">{{ message }}</span>
   </div>
@@ -67,9 +67,11 @@
         </select>
       </label>
     </div>
+    <div *ngIf="!circuit"><p role="status" *ngIf="circuitLoading">Vérification du circuit…</p><p role="alert" *ngIf="circuitError">{{circuitError}}</p><button type="button" class="btn btn--light" *ngIf="circuitError" [disabled]="circuitLoading" (click)="loadCircuit()">Réessayer le chargement du circuit</button></div>
+      <app-rh-circuit [circuit]="circuit" [apercu]="true" [peutConfigurer]="peutConfigurerCircuit" [chargement]="circuitLoading || busy" [actualisationDisponible]="true" (actualiser)="loadCircuit()"></app-rh-circuit>
     <div class="form-actions">
-      <button class="btn btn--primary" (click)="createDemande()">Envoyer</button>
-      <button class="btn btn--light" (click)="reload()">Rafraichir</button>
+      <button class="btn btn--primary" [disabled]="busy || circuitLoading || !circuit || !!circuit.blocage" (click)="createDemande()">Envoyer</button>
+      <button class="btn btn--light" (click)="reload(); loadCircuit()">Rafraichir</button>
     </div>
   </div>
 
@@ -117,7 +119,7 @@
   </div>
 
   <div class="card authorization-validation-card">
-    <h3>Demandes a valider (superieur)</h3>
+    <h3>Demandes à valider à l’étape courante</h3>
     <table class="table">
       <thead>
       <tr>
@@ -166,14 +168,15 @@
         <p><strong>Statut:</strong> {{ demandeSelectionnee.statutValidation }}</p>
         <p><strong>Commentaire:</strong> {{ demandeSelectionnee.commentaireValidation || '-' }}</p>
       </div>
+      <app-rh-circuit [circuit]="demandeSelectionnee.circuit"></app-rh-circuit>
       <div class="details-actions" *ngIf="canProcessDemande(demandeSelectionnee)">
         <button
           class="btn btn--small btn-validate"
-          (click)="valider(demandeSelectionnee.id)"
+          [disabled]="busy" (click)="valider(demandeSelectionnee)"
         >
           Valider
         </button>
-        <button class="btn btn--small btn-reject" (click)="rejeter(demandeSelectionnee.id)">
+        <button class="btn btn--small btn-reject" [disabled]="busy" (click)="rejeter(demandeSelectionnee)">
           Rejeter
         </button>
         <button class="btn btn--small btn--light" (click)="visionnerPdf(demandeSelectionnee.id)">

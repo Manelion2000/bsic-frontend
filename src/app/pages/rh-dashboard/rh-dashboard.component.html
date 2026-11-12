@@ -1,0 +1,64 @@
+﻿<section class="section-stack rh-dashboard" [attr.aria-busy]="loading">
+  <header class="page-header">
+    <div><span class="page-header__eyebrow">Espace ressources humaines</span><h1 class="page-title">Tableau de bord RH</h1><p class="page-subtitle">{{ data?.nomUtilisateur ? 'Bonjour ' + data?.nomUtilisateur + '. ' : '' }}Suivez les absences, les jours validés et les équipes concernées.</p></div>
+    <a class="btn btn--light" routerLink="/autorisations-absence">Gérer les demandes</a>
+  </header>
+  <p class="feedback" role="alert" *ngIf="message">{{ message }}</p>
+  <section class="card filters" aria-label="Filtres du tableau de bord">
+    <div class="filter-heading"><strong>Période et périmètre</strong><div class="quick-periods"><button type="button" (click)="setPeriod('month')">Ce mois</button><button type="button" (click)="setPeriod('30days')">30 derniers jours</button><button type="button" (click)="setPeriod('year')">Cette année</button></div></div>
+    <div class="filter-fields">
+      <label>Du<input type="date" [(ngModel)]="debut" name="debut"></label>
+      <label>Au<input type="date" [(ngModel)]="fin" name="fin" [min]="debut"></label>
+      <label>Département<select [(ngModel)]="idDepartement" name="departement" (ngModelChange)="onDepartmentChange()"><option value="">Tous les départements</option><option *ngFor="let dep of data?.departements" [value]="dep.id">{{ dep.nom }}</option></select></label>
+      <label>Service<select [(ngModel)]="idService" name="service" (ngModelChange)="reload()"><option value="">Tous les services</option><option *ngFor="let service of filteredServices" [value]="service.id">{{ service.nom }}</option></select></label>
+      <button class="btn btn--primary" [disabled]="loading" (click)="reload()">{{ loading ? 'Chargement…' : 'Actualiser' }}</button>
+    </div>
+    <div class="filter-footer"><span *ngIf="data">Données du {{ data.debut | date:'dd/MM/yyyy' }} au {{ data.fin | date:'dd/MM/yyyy' }} · actualisées à {{ updatedAt | date:'HH:mm' }}</span><span *ngIf="filtersChanged && data" class="unapplied">Actualisez pour appliquer la nouvelle période.</span><button *ngIf="idDepartement || idService" type="button" (click)="resetStructure()">Afficher toutes les équipes</button></div>
+  </section>
+  <p *ngIf="loading" class="loading" role="status">Chargement des données RH…</p>
+  <ng-container *ngIf="data as dashboard">
+    <div class="kpis">
+      <article class="emphasis"><span>Jours d’absence validés</span><strong>{{ dashboard.joursAbsenceValides | number:'1.0-0' }}</strong><small>{{ dashboard.absencesValidees }} demande(s) validée(s) · jours calendaires</small></article>
+      <article><span>Agents concernés</span><strong>{{ dashboard.agentsConcernes }}</strong><small>Au moins une absence validée sur la période</small></article>
+      <article class="pending-card"><span>Demandes en attente</span><strong>{{ dashboard.absencesEnAttente }}</strong><small>{{ dashboard.joursAbsenceEnAttente }} jour(s) à confirmer</small></article>
+      <article><span>Absents aujourd’hui</span><strong>{{ dashboard.absentsAujourdHui }}</strong><small>Agents avec une absence validée · dans la période</small></article>
+      <article><span>Absences à venir</span><strong>{{ dashboard.absencesAVenir }}</strong><small>Demandes validées démarrant après aujourd’hui</small></article>
+      <article><span>Demandes d’absence</span><strong>{{ dashboard.absencesTotal }}</strong><small>{{ dashboard.absencesRejetees }} rejetée(s) · {{ dashboard.absencesAnnulees }} annulée(s)</small></article>
+    </div>
+    <aside class="accounting-note"><span class="note-icon" aria-hidden="true">i</span><p>Le décompte comprend uniquement les <strong>jours calendaires validés dans la période sélectionnée</strong>. Les jours en attente, rejetés ou annulés restent séparés. Une absence traversant plusieurs mois est répartie entre les mois concernés.</p></aside>
+    <div class="dashboard-grid">
+      <section class="card chart-panel">
+        <div class="section-title"><div><h2>Jours d’absence par mois</h2><p>Le volume validé, mois après mois</p></div><span class="unit">Jours calendaires</span></div>
+        <div class="empty-chart" *ngIf="!dashboard.joursAbsenceValides">Aucun jour d’absence validé sur cette période.</div>
+        <div class="histogram" *ngIf="dashboard.joursAbsenceValides" aria-label="Répartition mensuelle des jours d’absence validés">
+          <div class="bar-group" *ngFor="let item of dashboard.tendances"><div class="bar-space"><div class="month-bar" [style.height.%]="monthlyHeight(item.joursAbsence)" [title]="monthLabel(item.periode) + ' : ' + item.joursAbsence + ' jours validés'"><span>{{ item.joursAbsence }}</span></div></div><strong>{{ monthLabel(item.periode) }}</strong></div>
+        </div>
+      </section>
+      <section class="card chart-panel">
+        <div class="section-title"><div><h2>Suivi des décisions</h2><p>{{ dashboard.tauxValidation | number:'1.0-1' }} % de validation parmi les absences traitées</p></div><span class="unit">{{ dashboard.absencesTotal }} demande(s)</span></div>
+        <div class="status-track" *ngIf="dashboard.absencesTotal"><span *ngFor="let status of statuses" [class]="status.className" [style.width.%]="statusWidth(status.code)" [title]="status.label + ' : ' + statusCount(status.code)"></span></div>
+        <div class="status-list"><button *ngFor="let status of statuses" (click)="statut = status.code; view = 'registre'; filterRegister()"><span><i [class]="status.className"></i>{{ status.label }}</span><strong>{{ statusCount(status.code) }}</strong></button></div>
+        <div class="sorties-summary"><div><span>Autorisations de sortie</span><strong>{{ dashboard.sortiesTotal }}</strong></div><small>{{ dashboard.sortiesEnAttente }} en attente · {{ dashboard.sortiesValidees }} validée(s)</small><button class="text-button" (click)="export('SORTIES')" [disabled]="!!exporting || loading || filtersChanged">Exporter les sorties</button></div>
+      </section>
+    </div>
+    <section class="card departments">
+      <div class="section-title"><div><h2>Répartition par département</h2><p>Identifiez les équipes concernées et ouvrez leur registre.</p></div></div>
+      <p class="empty-state" *ngIf="!dashboard.parDepartement.length">Aucune demande dans ce périmètre.</p>
+      <div class="department-row" *ngFor="let row of dashboard.parDepartement"><button type="button" (click)="focusDepartment(row.id)" [disabled]="!row.id" [title]="'Filtrer sur ' + row.departement">{{ row.departement }}</button><div class="department-track"><span [style.width.%]="departmentWidth(row.joursAbsence)"></span></div><strong>{{ row.joursAbsence }} j</strong><small>{{ row.absences }} absence(s)</small></div>
+    </section>
+    <section class="card register">
+      <div class="section-title"><div><h2>Comptabilisation des absences</h2><p>Consultez le registre des demandes ou le cumul individuel des agents.</p></div><button class="btn btn--primary" (click)="export(view === 'agents' ? 'AGENTS' : 'ABSENCES')" [disabled]="!!exporting || loading || filtersChanged">{{ exporting ? 'Export en cours…' : view === 'agents' ? 'Exporter le bilan CSV' : 'Exporter le registre CSV' }}</button></div>
+      <div class="view-tabs" role="group" aria-label="Vue de comptabilisation"><button [class.active]="view === 'registre'" [attr.aria-pressed]="view === 'registre'" (click)="view = 'registre'">Registre des absences</button><button [class.active]="view === 'agents'" [attr.aria-pressed]="view === 'agents'" (click)="view = 'agents'">Bilan par agent</button></div>
+      <ng-container *ngIf="view === 'registre'">
+        <div class="register-filters"><label>Rechercher<input type="search" [(ngModel)]="recherche" name="recherche" (ngModelChange)="filterRegister()" placeholder="Nom, matricule ou motif"></label><label>Statut<select [(ngModel)]="statut" name="statut" (ngModelChange)="filterRegister()"><option value="">Tous les statuts</option><option *ngFor="let status of statuses" [value]="status.code">{{ status.label }}</option></select></label><span>{{ filteredRegister.length }} demande(s) · <strong>{{ registerDays }} jour(s) validé(s)</strong></span></div>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Agent</th><th>Équipe</th><th>Période d’absence</th><th>Jours dans la période</th><th>Statut</th><th>Détail</th></tr></thead><tbody>
+          <tr *ngFor="let row of pagedRegister"><td><strong>{{ row.nomCompletDemandeur }}</strong><small>{{ row.matriculeDemandeur || 'Matricule non renseigné' }}</small></td><td>{{ row.departement }}<small>{{ row.service }}</small></td><td>{{ row.dateDebut | date:'dd/MM/yyyy' }}<small>au {{ row.dateFin | date:'dd/MM/yyyy' }}</small></td><td><strong>{{ row.joursPeriode }} j</strong><small>{{ row.nombreJours }} j au total</small></td><td><span class="status-badge" [ngClass]="statusClass(row.statutValidation)">{{ statusLabel(row.statutValidation) }}</span></td><td><button type="button" class="text-button" (click)="selectedAbsence = row" [attr.aria-label]="'Voir la demande de ' + row.nomCompletDemandeur">Voir</button></td></tr>
+          <tr *ngIf="!filteredRegister.length"><td colspan="6" class="empty-state">Aucune absence ne correspond aux filtres sélectionnés.</td></tr>
+        </tbody><tfoot *ngIf="filteredRegister.length"><tr><td colspan="3">Total validé du registre filtré</td><td><strong>{{ registerDays }} j</strong></td><td colspan="2">{{ filteredRegister.length }} demande(s)</td></tr></tfoot></table></div>
+        <div class="pagination" *ngIf="pageCount > 1"><span>Page {{ page + 1 }} sur {{ pageCount }}</span><button class="btn btn--light" [disabled]="page === 0" (click)="page = page - 1">Précédent</button><button class="btn btn--light" [disabled]="page + 1 >= pageCount" (click)="page = page + 1">Suivant</button></div>
+        <aside class="request-detail" *ngIf="selectedAbsence as row"><div><h3>{{ row.nomCompletDemandeur }} · {{ statusLabel(row.statutValidation) }}</h3><button type="button" class="text-button" (click)="selectedAbsence = undefined">Fermer le détail</button></div><p><strong>Motif :</strong> {{ row.motif }}</p><p><strong>Validateur :</strong> {{ row.validateur || 'En attente de décision' }}</p><p *ngIf="row.commentaireValidation"><strong>Commentaire :</strong> {{ row.commentaireValidation }}</p></aside>
+      </ng-container>
+      <div class="table-wrap" *ngIf="view === 'agents'"><table class="table"><thead><tr><th>Agent</th><th>Équipe</th><th>Demandes</th><th>Validées</th><th>En attente</th><th>Jours validés</th><th></th></tr></thead><tbody><tr *ngFor="let agent of dashboard.parAgent"><td><strong>{{ agent.nom }}</strong><small>{{ agent.matricule || 'Matricule non renseigné' }}</small></td><td>{{ agent.departement }}<small>{{ agent.service }}</small></td><td>{{ agent.demandes }}</td><td>{{ agent.validees }}</td><td>{{ agent.enAttente }}</td><td><strong>{{ agent.jours }} j</strong></td><td><button class="text-button" (click)="focusAgent(agent.matricule || agent.nom)">Demandes</button></td></tr><tr *ngIf="!dashboard.parAgent.length"><td colspan="7" class="empty-state">Aucun agent concerné sur la période.</td></tr></tbody><tfoot *ngIf="dashboard.parAgent.length"><tr><td colspan="5">Total de la période</td><td><strong>{{ dashboard.joursAbsenceValides }} j</strong></td><td></td></tr></tfoot></table></div>
+    </section>
+  </ng-container>
+</section>

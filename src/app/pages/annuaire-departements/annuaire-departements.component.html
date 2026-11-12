@@ -1,21 +1,23 @@
-<section class="section-stack">
-  <div class="page-header">
+<section class="section-stack directory-management">
+  <div class="management-header"><span class="eyebrow">Organisation de la banque</span>
     <div>
-      <h1 class="page-title">Departements</h1>
-      <p class="page-subtitle">Decoupage detaille des departements.</p>
+      <h1 class="page-title">Départements</h1>
+      <p class="page-subtitle">Découpage détaillé des départements.</p>
     </div>
-    <button class="btn btn--primary" (click)="openCreateForm()">Nouveau departement</button>
+    <button class="btn btn--primary" *ngIf="canManage" (click)="openCreateForm()">Nouveau département</button>
   </div>
 
-  <div class="card">
+  <app-directory-nav [management]="canManage" />
+  <p class="feedback" role="status" [class.error]="messageType==='error'" *ngIf="message && !showForm">{{message}}</p>
+  <div class="card register">
     <div class="form-grid">
       <label class="form-field">
         Recherche
-        <input type="text" [(ngModel)]="searchTerm" placeholder="Code, nom..." />
+        <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="pageIndex=0" placeholder="Code, nom..." />
       </label>
       <label class="form-field">
         Taille page
-        <select [(ngModel)]="pageSize">
+        <select [(ngModel)]="pageSize" (ngModelChange)="pageIndex=0">
           <option [ngValue]="5">5</option>
           <option [ngValue]="8">8</option>
           <option [ngValue]="15">15</option>
@@ -23,70 +25,95 @@
       </label>
     </div>
 
+    <div class="register-summary" role="status">{{filteredDepartements.length}} département(s) dans cette sélection</div>
+    <p class="loading" role="status" *ngIf="loading">Chargement…</p>
+    <div class="table-scroll">
     <table class="table">
       <thead>
         <tr>
-          <th>Code</th>
-          <th>Nom</th>
-          <th>Actions</th>
+          <th scope="col">Code</th>
+          <th scope="col">Nom</th>
+          <th scope="col">Pôle DGA</th>
+          <th scope="col">Parent</th>
+          <th scope="col">DGA effectif</th>
+          <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let dep of pagedDepartements" (click)="selectDepartement(dep)">
+        <tr *ngFor="let dep of pagedDepartements">
           <td>{{ dep.code }}</td>
           <td>{{ dep.nom }}</td>
+          <td>{{ dgaPoleLabel(dep.dgaPole) }}</td>
+          <td>{{ dep.nomParentDepartement || '-' }}</td>
+          <td>{{ dgaReferentLabel(dep) }}</td>
           <td>
-            <div class="table-actions">
-              <button class="icon-btn" title="Update" aria-label="Update" (click)="selectDepartement(dep); $event.stopPropagation();">
+            <div class="table-actions"><a class="btn btn--light" routerLink="/annuaire/annuaire" [queryParams]="{departementId:dep.id}">Contacts</a>
+              <button class="icon-btn" *ngIf="canManage" title="Modifier" aria-label="Modifier" (click)="selectDepartement(dep); $event.stopPropagation();">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
                 </svg>
               </button>
-              <button class="icon-btn icon-btn--danger" disabled title="Supprimer indisponible" aria-label="Supprimer indisponible">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 6h18" />
-                  <path d="M8 6V4h8v2" />
-                  <path d="M19 6l-1 14H6L5 6" />
-                </svg>
-              </button>
+
             </div>
           </td>
         </tr>
       </tbody>
-    </table>
+    </table></div>
+    <div class="empty-state" *ngIf="!loading && !filteredDepartements.length"><h2>Aucun résultat</h2><p>Essayez un autre nom ou un autre code.</p><button class="btn btn--light" type="button" *ngIf="searchTerm" (click)="searchTerm='';pageIndex=0">Effacer la recherche</button></div>
     <div class="form-actions">
-      <button class="btn btn--light" (click)="prevPage()">Precedent</button>
+      <button class="btn btn--light" [disabled]="pageIndex===0 || loading" (click)="prevPage()">Précédent</button>
       <span class="chip">Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
-      <button class="btn btn--light" (click)="nextPage()">Suivant</button>
+      <button class="btn btn--light" [disabled]="pageIndex+1>=totalPages || loading" (click)="nextPage()">Suivant</button>
     </div>
   </div>
 
-  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
-  <form class="card card--accent crud-modal" #departementForm="ngForm" (click)="$event.stopPropagation()">
+  <dialog #editDialog class="management-dialog" aria-labelledby="reference-title" (cancel)="$event.preventDefault();closeFormModal()">
+  <form class="reference-form" #departementForm="ngForm" (ngSubmit)="create(departementForm)">
     <div class="page-header" style="margin-bottom: 1rem;">
       <div>
-        <h2 class="page-title" style="font-size: 1.35rem;">Formulaire departement</h2>
-        <p class="page-subtitle">{{ message || 'Structurer les equipes internes.' }}</p>
+        <h2 id="reference-title" class="page-title" style="font-size: 1.35rem;">Formulaire département</h2>
+        <p class="page-subtitle">Les champs marqués * sont obligatoires.</p>
       </div>
     </div>
-    <div class="form-grid">
+    <p class="feedback" role="alert" *ngIf="message">{{message}}</p><fieldset [disabled]="isSaving"><div class="form-grid">
       <label class="form-field">
-        Code
+        Code *
         <input type="text" [(ngModel)]="form.code" name="code" required placeholder="DEP-ANL" />
-        <span class="badge badge--orange" *ngIf="submitted && departementForm.controls['']?.invalid">Requis</span>
+        <span class="badge badge--orange" *ngIf="submitted && departementForm.controls['code']?.invalid">Requis</span>
       </label>
       <label class="form-field">
-        Nom
+        Nom *
         <input type="text" [(ngModel)]="form.nom" name="nom" required placeholder="Analyse credit" />
-        <span class="badge badge--orange" *ngIf="submitted && departementForm.controls['']?.invalid">Requis</span>
+        <span class="badge badge--orange" *ngIf="submitted && departementForm.controls['nom']?.invalid">Requis</span>
+      </label>
+      <label class="form-field">
+        Pôle DGA
+        <select [(ngModel)]="form.dgaPole" name="dgaPole">
+          <option [ngValue]="undefined">Hériter du parent</option>
+          <option *ngFor="let pole of dgaPoles" [ngValue]="pole.value">{{ pole.label }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        Département parent
+        <select [(ngModel)]="form.idParentDepartement" name="idParentDepartement">
+          <option [ngValue]="undefined">Aucun parent</option>
+          <option *ngFor="let dep of parentDepartementOptions" [ngValue]="dep.id">{{ dep.nom }}</option>
+        </select>
+      </label>
+      <label class="form-field">
+        DGA référent explicite
+        <select [(ngModel)]="form.idDgaValidateur" name="idDgaValidateur">
+          <option [ngValue]="undefined">Hériter du parent ou du pole</option>
+          <option *ngFor="let dga of dgaValidateurs" [ngValue]="dga.id">{{ userDisplayName(dga) }}</option>
+        </select>
       </label>
     </div>
-    <div class="form-actions">
-      <button class="btn btn--primary" type="button" (click)="create(departementForm)">Enregistrer</button>
-      <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+    </fieldset><div class="form-actions">
+      <button class="btn btn--primary" [disabled]="isSaving">Enregistrer</button>
+      <button class="btn btn--light" type="button" [disabled]="isSaving" (click)="closeFormModal()">Annuler</button>
     </div>
   </form>
-  </div>
+  </dialog>
 </section>
 

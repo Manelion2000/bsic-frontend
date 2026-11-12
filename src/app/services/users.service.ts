@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { API_BASE_URL } from './api.config';
+import { extractErrorMessage } from '../shared/error.utils';
 
 export interface BaRoleDto {
   id?: string;
@@ -11,6 +12,10 @@ export interface BaRoleDto {
 }
 
 export interface BaUserDto {
+  version?: number;
+  passwordChangeRequired?: boolean;
+  canResetUserAccess?: boolean;
+  initialCredential?: TemporaryCredential;
   id?: string;
   username?: string;
   nom?: string;
@@ -43,6 +48,8 @@ export interface BaUserDto {
   indicatifPays?: string;
 }
 
+export interface TemporaryCredential {username:string;temporaryPassword:string;expiresAt:string;userVersion:number;}
+
 export interface RoleAssignmentResult {
   success: boolean;
   message: string;
@@ -68,9 +75,11 @@ export class UsersService {
     return this.http.get<BaUserDto[]>(this.baseUrl);
   }
 
-  createUser(user: BaUserDto): Observable<void> {
-    return this.http.post<void>(this.baseUrl, user);
+  createUser(user: BaUserDto): Observable<BaUserDto|void> {
+    return this.http.post<BaUserDto>(this.baseUrl, user);
   }
+
+  resetAccess(user:BaUserDto,motif:string){return this.http.post<TemporaryCredential>(`${this.baseUrl}/${encodeURIComponent(user.id!)}/initialiser-acces`,{version:user.version,motif});}
 
   updateUser(code: string, user: BaUserDto): Observable<void> {
     return this.http.put<void>(`${this.baseUrl}/${code}`, user);
@@ -88,29 +97,23 @@ export class UsersService {
     return this.http.get(`${this.baseUrl}/${id}/activate`, { responseType: 'text' });
   }
 
+  activerUser(id: string): Observable<BaUserDto> {
+    return this.http.put<BaUserDto>(`${this.baseUrl}/${id}/activer`, {});
+  }
+
+  desactiverUser(id: string): Observable<BaUserDto> {
+    return this.http.put<BaUserDto>(`${this.baseUrl}/${id}/desactiver`, {});
+  }
+
   addRoleToUser(userId: string, roleId: string): Observable<RoleAssignmentResult> {
     return this.http.post<BaUserDto>(`${this.baseUrl}/${userId}/roles/${roleId}`, {}).pipe(
-      map((user) => ({ success: true, message: 'Role ajoute avec succes.', user })),
-      catchError((error) => {
-        const result: RoleAssignmentResult = {
-          success: false,
-          message: `Erreur lors de l'ajout du role a l'utilisateur: ${error.message || 'Erreur serveur'}`
-        };
-        return throwError(() => result);
-      })
+      map((user) => ({ success: true, message: 'Role ajoute avec succes.', user }))
     );
   }
 
   removeRoleFromUser(userId: string, roleId: string): Observable<RoleAssignmentResult> {
     return this.http.delete<BaUserDto>(`${this.baseUrl}/${userId}/roles/${roleId}`).pipe(
-      map((user) => ({ success: true, message: 'Role supprime avec succes.', user })),
-      catchError((error) => {
-        const result: RoleAssignmentResult = {
-          success: false,
-          message: `Erreur lors de la suppression du role: ${error.message || 'Erreur serveur'}`
-        };
-        return throwError(() => result);
-      })
+      map((user) => ({ success: true, message: 'Role supprime avec succes.', user }))
     );
   }
 
@@ -136,14 +139,15 @@ export class UsersService {
       return of({ success: false, message: 'Aucun role fourni pour l\'assignation.' });
     }
 
-    return forkJoin(roleIds.map((roleId) => this.addRoleToUser(userId, roleId))).pipe(
-      map(() => ({ success: true, message: `${roleIds.length} role(s) assigne(s) avec succes.` })),
-      catchError((error) => {
-        const result: RoleAssignmentResult = {
-          success: false,
-          message: `Erreur lors de l'assignation multiple des roles: ${error.message || 'Erreur serveur'}`
-        };
-        return throwError(() => result);
+    // Attendre chaque réponse, y compris les refus, avant de relire les droits réels.
+    return forkJoin([...new Set(roleIds)].map(roleId => this.addRoleToUser(userId, roleId).pipe(
+      catchError(error => of<RoleAssignmentResult>({success: false, message: extractErrorMessage(error, 'Impossible d’assigner ce rôle.')}))
+    ))).pipe(
+      map(results => {
+        const failures = results.filter(result => !result.success);
+        return {success: failures.length === 0, message: failures.length
+          ? failures.map(result => result.message).join(' ; ')
+          : `${results.length} rôle(s) assigné(s) avec succès.`};
       })
     );
   }

@@ -1,0 +1,169 @@
+<section class="section-stack">
+  <div class="page-header">
+    <div>
+      <span class="page-header__eyebrow">Workflow</span>
+      <h1 class="page-title">Delegations de validation</h1>
+      <p class="page-subtitle">Affecter temporairement un role de validation dans un perimetre defini.</p>
+    </div>
+    <button class="btn btn--primary" type="button" (click)="openCreateForm()">Nouvelle delegation</button>
+  </div>
+
+  <div class="feedback feedback--success" *ngIf="message">{{ message }}</div>
+
+  <div class="card workspace-panel">
+    <div class="form-grid">
+      <label class="form-field">
+        Recherche
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Delegue, role, structure..." />
+      </label>
+      <label class="form-field">
+        Taille page
+        <select [(ngModel)]="pageSize">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="8">8</option>
+          <option [ngValue]="15">15</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Delegue</th>
+            <th>Role</th>
+            <th>Perimetre</th>
+            <th>Periode</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let delegation of pagedDelegations" (click)="selectDelegation(delegation)">
+            <td>{{ delegation.nomDelegue || delegation.idDelegue }}</td>
+            <td><span class="chip chip--small code-chip">{{ delegation.roleCode }}</span></td>
+            <td>{{ delegationScope(delegation) }}</td>
+            <td>{{ delegation.dateDebut }} - {{ delegation.dateFin }}</td>
+            <td>
+              <span class="badge" [class.badge--success]="delegation.actif" [class.badge--error]="!delegation.actif">
+                {{ delegation.actif ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="table-actions">
+                <button class="icon-btn" title="Modifier" aria-label="Modifier" type="button" (click)="selectDelegation(delegation); $event.stopPropagation();">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                </button>
+                <button class="icon-btn icon-btn--danger" title="Desactiver" aria-label="Desactiver" type="button" (click)="desactiver(delegation); $event.stopPropagation();">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4h8v2" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn--light" type="button" (click)="prevPage()">Precedent</button>
+      <span class="chip">Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
+      <button class="btn btn--light" type="button" (click)="nextPage()">Suivant</button>
+    </div>
+  </div>
+
+  <div class="crud-modal-overlay" *ngIf="showForm" (click)="closeFormModal()">
+    <form class="card card--accent crud-modal" #delegationForm="ngForm" (click)="$event.stopPropagation()">
+      <div class="page-header" style="margin-bottom: 1rem;">
+        <div>
+          <span class="page-header__eyebrow">Interim</span>
+          <h2 class="page-title" style="font-size: 1.35rem;">Formulaire delegation</h2>
+          <p class="page-subtitle">Choisir le delegue, le role et le perimetre de validation.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label class="form-field">
+          Delegue
+          <select [(ngModel)]="form.idDelegue" name="idDelegue" required>
+            <option value="">Selectionner</option>
+            <option *ngFor="let user of users" [value]="user.id">{{ userLabel(user) }}</option>
+          </select>
+        </label>
+
+        <label class="form-field">
+          Delegant
+          <select [(ngModel)]="form.idDelegant" name="idDelegant">
+            <option value="">Non renseigne</option>
+            <option *ngFor="let user of users" [value]="user.id">{{ userLabel(user) }}</option>
+          </select>
+        </label>
+
+        <label class="form-field">
+          Role delegue
+          <select [(ngModel)]="form.roleCode" name="roleCode" required>
+            <option *ngFor="let roleCode of roleOptions" [value]="roleCode">{{ roleCode }}</option>
+          </select>
+        </label>
+
+        <label class="form-field">
+          Departement
+          <select [(ngModel)]="form.idDepartement" name="idDepartement">
+            <option value="">Aucun</option>
+            <option *ngFor="let departement of departements" [value]="departement.id">{{ departement.nom }}</option>
+          </select>
+        </label>
+
+        <label class="form-field">
+          Service
+          <select [(ngModel)]="form.idService" name="idService">
+            <option value="">Aucun</option>
+            <option *ngFor="let service of services" [value]="service.id">{{ service.nom }}</option>
+          </select>
+        </label>
+
+        <label class="form-field">
+          Agence
+          <select [(ngModel)]="form.idAgence" name="idAgence">
+            <option value="">Aucune</option>
+            <option *ngFor="let agence of agences" [value]="agence.id">{{ agence.nom }}</option>
+          </select>
+        </label>
+
+        <label class="form-field">
+          Date debut
+          <input type="date" [(ngModel)]="form.dateDebut" name="dateDebut" required />
+        </label>
+
+        <label class="form-field">
+          Date fin
+          <input type="date" [(ngModel)]="form.dateFin" name="dateFin" required />
+        </label>
+
+        <label class="form-field">
+          Statut
+          <select [(ngModel)]="form.actif" name="actif">
+            <option [ngValue]="true">Active</option>
+            <option [ngValue]="false">Inactive</option>
+          </select>
+        </label>
+
+        <label class="form-field form-field--wide">
+          Motif
+          <textarea [(ngModel)]="form.motif" name="motif" placeholder="Interim, absence, conge..."></textarea>
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn--primary" type="button" (click)="save(delegationForm)">Enregistrer</button>
+        <button class="btn btn--light" type="button" (click)="closeFormModal()">Annuler</button>
+      </div>
+    </form>
+  </div>
+</section>

@@ -15,6 +15,13 @@ export interface BaDepartementDto {
   id?: string;
   code?: string;
   nom?: string;
+  dgaPole?: 'OPERATIONS' | 'DEVELOPPEMENT';
+  idParentDepartement?: string;
+  nomParentDepartement?: string;
+  idDgaValidateur?: string;
+  nomDgaValidateur?: string;
+  idDgaEffectif?: string;
+  nomDgaEffectif?: string;
 }
 
 export interface BaAgenceDto {
@@ -61,7 +68,10 @@ export interface BaAnnuaireAgentDto {
   nom?: string;
   prenom?: string;
   fonction?: string;
+  email?: string;
+  emailPro?: string;
   numeroPoste?: string;
+  telephone?: string;
   telephoneSecondaire?: string;
   idService?: string;
   nomService?: string;
@@ -78,6 +88,7 @@ export interface BaAnnuaireDepartementDto {
 @Injectable({ providedIn: 'root' })
 export class AnnuaireService {
   private baseUrl = `${API_BASE_URL}/annuaires`;
+  private publicBaseUrl = `${API_BASE_URL}/public/annuaires`;
 
   constructor(private http: HttpClient) {}
 
@@ -123,5 +134,25 @@ export class AnnuaireService {
     if (serviceId) params = params.set('serviceId', serviceId);
     if (agenceId) params = params.set('agenceId', agenceId);
     return this.http.get<BaAnnuaireDepartementDto[]>(`${this.baseUrl}/annuaire`, { params });
+  }
+
+  getPublicServices(): Observable<BaServiceDto[]> {
+    return this.http.get<BaServiceDto[]>(`${this.publicBaseUrl}/services`);
+  }
+
+  getPublicDepartements(): Observable<BaDepartementDto[]> {
+    return this.http.get<BaDepartementDto[]>(`${this.publicBaseUrl}/departements`);
+  }
+
+  getPublicAgences(): Observable<BaAgenceDto[]> {
+    return this.http.get<BaAgenceDto[]>(`${this.publicBaseUrl}/agences`);
+  }
+
+  getPublicAnnuaire(departementId?: string, serviceId?: string, agenceId?: string): Observable<BaAnnuaireDepartementDto[]> {
+    let params = new HttpParams();
+    if (departementId) params = params.set('departementId', departementId);
+    if (serviceId) params = params.set('serviceId', serviceId);
+    if (agenceId) params = params.set('agenceId', agenceId);
+    return this.http.get<BaAnnuaireDepartementDto[]>(`${this.publicBaseUrl}/annuaire`, { params });
   }
 }

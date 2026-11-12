@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import {
   BaRepriseServiceDto,
   BaRepriseServiceRequestDto,
-  HabilitationsService
-} from '../../services/habilitations.service';
+  RhDemandesService
+} from '../../services/rh-demandes.service';
 import { BaUserDto, UsersService } from '../../services/users.service';
 
 @Component({
@@ -27,7 +27,7 @@ export class ReprisesServiceComponent implements OnInit {
   form: BaRepriseServiceRequestDto = this.emptyForm();
 
   constructor(
-    private habilitationsService: HabilitationsService,
+    private rhDemandesService: RhDemandesService,
     private usersService: UsersService
   ) {}
 
@@ -41,7 +41,7 @@ export class ReprisesServiceComponent implements OnInit {
 
   reload(): void {
     this.loading = true;
-    this.habilitationsService.getMesReprisesService().subscribe({
+    this.rhDemandesService.getMesReprisesService().subscribe({
       next: (data) => {
         this.mesDemandes = data || [];
         this.loading = false;
@@ -51,7 +51,7 @@ export class ReprisesServiceComponent implements OnInit {
         this.loading = false;
       }
     });
-    this.habilitationsService.getReprisesServiceAValider().subscribe({
+    this.rhDemandesService.getReprisesServiceAValider().subscribe({
       next: (data) => (this.demandesAValider = data || []),
       error: () => (this.message = 'Erreur lors du chargement des validations.')
     });
@@ -74,7 +74,7 @@ export class ReprisesServiceComponent implements OnInit {
       this.message = 'La reprise de service ne peut pas etre declaree dans le futur.';
       return;
     }
-    this.habilitationsService.createRepriseService(this.form).subscribe({
+    this.rhDemandesService.createRepriseService(this.form).subscribe({
       next: () => {
         this.message = 'Declaration de reprise envoyee au signataire.';
         this.form = this.emptyForm();
@@ -101,7 +101,7 @@ export class ReprisesServiceComponent implements OnInit {
   valider(): void {
     const id = this.demandeSelectionnee?.id;
     if (!id) return;
-    this.habilitationsService.validerRepriseService(id, this.commentaire || undefined).subscribe({
+    this.rhDemandesService.validerRepriseService(id, this.commentaire || undefined).subscribe({
       next: () => {
         this.message = 'Reprise validee et agent autorise a prendre service.';
         this.fermerDetails();
@@ -117,7 +117,7 @@ export class ReprisesServiceComponent implements OnInit {
       this.message = 'Le commentaire de rejet est obligatoire.';
       return;
     }
-    this.habilitationsService.rejeterRepriseService(id, this.commentaire.trim()).subscribe({
+    this.rhDemandesService.rejeterRepriseService(id, this.commentaire.trim()).subscribe({
       next: () => {
         this.message = 'Demande de reprise rejetee.';
         this.fermerDetails();
@@ -129,7 +129,7 @@ export class ReprisesServiceComponent implements OnInit {
 
   attestation(id: string | undefined, preview: boolean): void {
     if (!id) return;
-    this.habilitationsService.downloadAttestationRepriseService(id).subscribe({
+    this.rhDemandesService.downloadAttestationRepriseService(id).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         if (preview) {

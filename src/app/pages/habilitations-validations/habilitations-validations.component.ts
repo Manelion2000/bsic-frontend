@@ -65,7 +65,9 @@ export class HabilitationsValidationsComponent implements OnInit {
       ? etape.nomService
       : etape.nomDepartement;
     const fallbackNiveau = niveau || etape.nomDepartementValidateur;
-    const fonction = etape.fonctionRequise ? ` (${this.formatFonction(etape.fonctionRequise)})` : '';
+    const fonction = etape.roleLibelle
+      ? ` (Role: ${etape.roleLibelle})`
+      : etape.fonctionRequise ? ` (${this.formatFonction(etape.fonctionRequise)})` : '';
 
     return `#${etape.ordre || '-'} - ${fallbackNiveau || 'Niveau de validation'}${fonction}`;
   }
@@ -74,6 +76,9 @@ export class HabilitationsValidationsComponent implements OnInit {
     const etape = this.getCurrentEtape(fiche);
     if (!etape) {
       return '-';
+    }
+    if (etape.roleLibelle) {
+      return `Role: ${etape.roleLibelle}`;
     }
     return etape.nomCompletValidateur || 'Selon la hierarchie';
   }

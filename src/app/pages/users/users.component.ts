@@ -11,15 +11,21 @@ import { Subscription, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { extractErrorMessage } from '../../shared/error.utils';
 import { AuthService } from '../../services/auth.service';
+import { ElementRef, ViewChild } from '@angular/core';
+import { TemporaryCredential } from '../../services/users.service';
+import { TemporaryPasswordComponent } from '../../shared/temporary-password.component';
+import { agentHierarchyCandidates, fillAgentHierarchy } from '../../shared/agent-hierarchy.utils';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TemporaryPasswordComponent],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.scss']
 })
 export class UsersComponent implements OnInit, OnDestroy {
+  @ViewChild('resetAccessDialog',{static:true}) resetAccessDialog!:ElementRef<HTMLDialogElement>;
+  credential?:TemporaryCredential;resetReason='';resetError='';resetting=false;resetTarget?:BaUserDto;
   users: BaUserDto[] = [];
   roles: BaRoleDto[] = [];
   profils: BaProfilDto[] = [];
@@ -38,16 +44,19 @@ export class UsersComponent implements OnInit, OnDestroy {
   submitted = false;
   isSubmitting = false;
   searchTerm = '';
-  pageSize = 8;
+  pageSize = 15;
   pageIndex = 0;
+  statusView: 'ACTIVE' | 'INACTIVE' = 'ACTIVE';
   showCreateForm = false;
   showUpdateSuccessPopup = false;
   updateSuccessMessage = '';
+  currentUser: BaUserDto | null = null;
 
   // Gestion professionnelle des rôles
   selectedUserRoles$: Observable<BaRoleDto[]> | null = null;
   availableUserRoles$: Observable<BaRoleDto[]> | null = null;
   roleManagementLoading = false;
+  roleManagementError: string | null = null;
   private roleManagementSubscription: Subscription | null = null;
 
   constructor(
@@ -68,9 +77,11 @@ export class UsersComponent implements OnInit, OnDestroy {
 
     this.loadUsers();
     this.loadRefs();
+    this.loadCurrentUser();
   }
 
   ngOnDestroy(): void {
+    this.credential=undefined;
     this.roleManagementSubscription?.unsubscribe();
     // Nettoyer les états de gestion des rôles
     if (this.selectedId) {
@@ -80,9 +91,10 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   get filteredUsers(): BaUserDto[] {
     const term = this.searchTerm.trim().toLowerCase();
-    if (!term) return this.users;
-    return this.users.filter((u) =>
-      `${u.nom || ''} ${u.prenom || ''} ${u.email || ''} ${u.username || ''}`
+    const usersByStatus = this.statusView === 'ACTIVE' ? this.activeUsers : this.inactiveUsers;
+    if (!term) return usersByStatus;
+    return usersByStatus.filter((u) =>
+      `${u.nom || ''} ${u.prenom || ''} ${u.email || ''} ${u.username || ''} ${u.matricule || ''} ${u.nomService || ''} ${u.nomDepartement || ''}`
         .toLowerCase()
         .includes(term)
     );
@@ -97,11 +109,46 @@ export class UsersComponent implements OnInit, OnDestroy {
     return Math.max(1, Math.ceil(this.filteredUsers.length / this.pageSize));
   }
 
+  get activeUsers(): BaUserDto[] {
+    return this.users.filter((u) => this.isActiveUser(u));
+  }
+
+  get inactiveUsers(): BaUserDto[] {
+    return this.users.filter((u) => !this.isActiveUser(u));
+  }
+
+  get currentViewTitle(): string {
+    return this.statusView === 'ACTIVE' ? 'Utilisateurs actifs' : 'Utilisateurs inactifs et verrouilles';
+  }
+
+  get currentViewSubtitle(): string {
+    return this.statusView === 'ACTIVE'
+      ? 'Comptes autorises a acceder a la plateforme'
+      : 'Comptes suspendus, verrouilles ou non actives';
+  }
+
+  getRoleSummary(user: BaUserDto): string {
+    const roles = user.roles || [];
+    if (!roles.length) {
+      return 'Aucun role';
+    }
+    return roles.map((role) => role.libelle || role.code).filter(Boolean).join(', ');
+  }
+
+  getRoleCount(user: BaUserDto): number {
+    return user.roles?.length || 0;
+  }
+
+  setStatusView(view: 'ACTIVE' | 'INACTIVE'): void {
+    this.statusView = view;
+    this.pageIndex = 0;
+  }
+
   loadRefs(): void {
     this.rolesService.getRoles().subscribe({ next: (data) => (this.roles = data || []) });
     this.profilsService.getProfils().subscribe({ next: (data) => (this.profils = data || []) });
     this.annuaireService.getDepartements().subscribe({ next: (data) => (this.departements = data || []) });
-    this.annuaireService.getServices().subscribe({ next: (data) => (this.services = data || []) });
+    this.annuaireService.getServices().subscribe({ next: (data) => {this.services = data || [];if(this.showCreateForm)this.fillHierarchy();} });
     this.annuaireService.getAgences().subscribe({ next: (data) => (this.agences = data || []) });
   }
 
@@ -112,6 +159,7 @@ export class UsersComponent implements OnInit, OnDestroy {
         this.users = data || [];
         this.loading = false;
         this.pageIndex = 0;
+        if(this.showCreateForm)this.fillHierarchy();
       },
       error: (err) => {
         this.loading = false;
@@ -120,9 +168,21 @@ export class UsersComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadCurrentUser(): void {
+    this.usersService.getUserWithMoreInfo().subscribe({
+      next: (user) => this.currentUser = user,
+      error: () => this.currentUser = null
+    });
+  }
+
   selectUser(user: BaUserDto): void {
+    if (!this.canManageUser(user)) {
+      this.notificationService.showWarning('Acces limite', 'Vous ne pouvez pas gerer cet utilisateur.');
+      return;
+    }
     this.selectedId = user.id || null;
     this.form = { ...user, roles: user.roles || [] };
+    this.fillHierarchy();
     this.showCreateForm = true;
     
     // Initialiser la gestion professionnelle des rôles
@@ -132,6 +192,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   resetForm(): void {
+    if(this.resetting)return;
     this.submitted = false;
     this.isSubmitting = false;
     this.selectedId = null;
@@ -147,6 +208,8 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.roleManagementSubscription?.unsubscribe();
     this.selectedUserRoles$ = null;
     this.availableUserRoles$ = null;
+    this.roleManagementLoading = false;
+    this.roleManagementError = null;
   }
 
   // Initialisation de la gestion des rôles
@@ -154,36 +217,26 @@ export class UsersComponent implements OnInit, OnDestroy {
     this.roleManagementLoading = true;
     this.roleManagementSubscription?.unsubscribe();
     
-    this.roleManagementSubscription = this.userRoleManagement.getUserRoleState(userId).subscribe({
-      next: (state) => {
-        this.roleManagementLoading = state.loading;
-        if (state.error) {
-          this.notificationService.showError('Erreur de gestion des rôles', state.error);
-        }
-      },
-      error: (err) => {
-        this.roleManagementLoading = false;
-        this.notificationService.showError('Erreur système', 'Erreur lors de la gestion des rôles utilisateur');
+    const roleState = this.userRoleManagement.getUserRoleState(userId);
+    this.selectedUserRoles$ = roleState.pipe(map((state: UserRoleState) => state.assignedRoles));
+    this.availableUserRoles$ = roleState.pipe(map((state: UserRoleState) => state.availableRoles));
+    this.roleManagementSubscription = roleState.subscribe(state => {
+      if (this.selectedId !== state.userId) return;
+      this.roleManagementLoading = state.loading;
+      this.roleManagementError = state.error;
+      if (!state.loading && !state.error) {
+        // Conserver la saisie et envoyer les rôles confirmés lors de la sauvegarde.
+        this.form.roles = [...state.assignedRoles];
+        this.users = this.users.map(user => user.id === userId ? {...user, roles: [...state.assignedRoles]} : user);
+        if (this.currentUser?.id === userId) this.currentUser = {...this.currentUser, roles: [...state.assignedRoles]};
       }
     });
-
-    // Initialiser l'état
-    this.userRoleManagement.initializeUserRoleState(userId).subscribe({
-      next: () => {
-        // Récupérer les observables des rôles
-        const roleState = this.userRoleManagement.getUserRoleState(userId);
-        this.selectedUserRoles$ = roleState.pipe(map((state: UserRoleState) => state.assignedRoles));
-        this.availableUserRoles$ = roleState.pipe(map((state: UserRoleState) => state.availableRoles));
-        this.roleManagementLoading = false;
-      },
-      error: () => {
-        this.roleManagementLoading = false;
-      }
-    });
+    this.userRoleManagement.initializeUserRoleState(userId).subscribe({error: () => {}});
   }
 
   // Gestion professionnelle des rôles
   addRoleToUser(role: BaRoleDto): void {
+    if (!this.isCurrentUserAdmin || this.roleManagementLoading || this.isSubmitting || !role.id) return;
     if (!this.selectedId) {
       this.notificationService.showWarning('Sélection requise', 'Veuillez sélectionner un utilisateur avant d\'ajouter un rôle.');
       return;
@@ -199,6 +252,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   removeRoleFromUser(role: BaRoleDto): void {
+    if (!this.isCurrentUserAdmin || this.roleManagementLoading || this.isSubmitting || !role.id) return;
     if (!this.selectedId) {
       this.notificationService.showWarning('Sélection requise', 'Veuillez sélectionner un utilisateur avant de supprimer un rôle.');
       return;
@@ -215,6 +269,7 @@ export class UsersComponent implements OnInit, OnDestroy {
 
   // Assignation multiple de rôles
   assignMultipleRoles(roleIds: string[]): void {
+    if (!this.isCurrentUserAdmin || this.roleManagementLoading || this.isSubmitting) return;
     if (!this.selectedId) {
       this.notificationService.showWarning('Sélection requise', 'Veuillez sélectionner un utilisateur avant d\'assigner des rôles.');
       return;
@@ -223,11 +278,6 @@ export class UsersComponent implements OnInit, OnDestroy {
     const userName = this.form.nom && this.form.prenom ? `${this.form.prenom} ${this.form.nom}` : 'cet utilisateur';
     
     this.userRoleManagement.assignMultipleRoles(this.selectedId, roleIds, userName).subscribe({
-      next: (result) => {
-        if (result.success) {
-          this.notificationService.showSuccess('Assignation réussie', `${roleIds.length} rôle(s) assigné(s) avec succès`);
-        }
-      },
       error: () => {
         // L'erreur est déjà gérée par le service
       }
@@ -276,9 +326,13 @@ export class UsersComponent implements OnInit, OnDestroy {
 
     this.notificationService.showInfo('Historique des opérations', `Dernières opérations:\n${summary}`);
   }
-
   // Méthodes existantes mises à jour avec notifications professionnelles
   createUser(formRef: NgForm): void {
+    if(this.isSubmitting)return;
+    if (!this.canManageUsers) {
+      this.notificationService.showError('Acces refuse', 'Action reservee aux administrateurs et aux chefs de service.');
+      return;
+    }
     this.submitted = true;
     if (formRef.invalid) {
       this.notificationService.showWarning('Validation requise', 'Veuillez renseigner tous les champs obligatoires avant de continuer.');
@@ -293,9 +347,10 @@ export class UsersComponent implements OnInit, OnDestroy {
     };
     this.isSubmitting = true;
     this.usersService.createUser(payload).subscribe({
-      next: () => {
+      next: (created) => {
         this.notificationService.showSuccess('Utilisateur créé', `L'utilisateur ${this.form.prenom} ${this.form.nom} a été créé avec succès.`);
         this.resetForm();
+        this.credential=created?.initialCredential;
         this.isSubmitting = false;
         this.loadUsers();
       },
@@ -306,7 +361,31 @@ export class UsersComponent implements OnInit, OnDestroy {
     });
   }
 
+  get canInitializeAccess():boolean {return this.currentUser?.canResetUserAccess ?? this.isCurrentUserAdmin;}
+  canResetUser(user:BaUserDto):boolean {return this.canInitializeAccess&&!!user.id&&user.id!==this.currentUser?.id&&user.activated===true&&user.locked!==true;}
+  get canResetSelectedUser():boolean {return this.canResetUser({...this.form,id:this.selectedId || undefined});}
+  beginResetAccess(user?:BaUserDto){
+    const target=user || {...this.form,id:this.selectedId || undefined};
+    if(!this.canResetUser(target)||this.resetting||this.isSubmitting)return;
+    this.resetTarget={...target};this.resetReason='';this.resetError='';this.resetAccessDialog.nativeElement.showModal();
+  }
+  closeResetAccess(){if(this.resetting)return;this.resetAccessDialog.nativeElement.close();this.resetTarget=undefined;this.resetError='';}
+  resetAccess(){
+    if(this.resetting||!this.resetTarget||!this.canInitializeAccess)return;
+    if(!this.resetReason.trim()){this.resetError='Précisez le motif de la réinitialisation.';return;}
+    this.resetting=true;this.resetError='';
+    this.usersService.resetAccess(this.resetTarget,this.resetReason.trim()).subscribe({next:credential=>{
+      this.resetting=false;if(this.selectedId===this.resetTarget?.id){this.form.version=credential.userVersion;this.form.passwordChangeRequired=true;}
+      this.closeResetAccess();this.credential=credential;this.loadUsers();
+    },error:e=>{this.resetting=false;this.resetError=extractErrorMessage(e,'Réinitialisation impossible.');}});
+  }
+
   updateUser(formRef: NgForm): void {
+    if (this.isSubmitting || this.roleManagementLoading) return;
+    if (!this.canManageUser(this.form)) {
+      this.notificationService.showError('Acces refuse', 'Vous ne pouvez pas modifier cet utilisateur.');
+      return;
+    }
     this.submitted = true;
     if (formRef.invalid) {
       this.notificationService.showWarning('Validation requise', 'Veuillez renseigner tous les champs obligatoires avant de continuer.');
@@ -360,15 +439,26 @@ export class UsersComponent implements OnInit, OnDestroy {
     });
   }
 
-  activateUser(user: BaUserDto): void {
+  toggleUserActivation(user: BaUserDto): void {
     if (!user.id) {
       this.notificationService.showError('Erreur système', 'Identifiant utilisateur manquant.');
       return;
     }
+    if (!this.canManageUser(user)) {
+      this.notificationService.showError('Acces refuse', 'Vous ne pouvez pas modifier le statut de cet utilisateur.');
+      return;
+    }
+    if (this.currentUser?.id === user.id && user.activated && !user.locked) {
+      this.notificationService.showWarning('Action interdite', 'Vous ne pouvez pas desactiver votre propre compte.');
+      return;
+    }
     const userName = user?.prenom && user?.nom ? `${user.prenom} ${user.nom}` : 'Cet utilisateur';
-    this.usersService.activateUser(user.id).subscribe({
+    const action$ = user.activated && !user.locked
+      ? this.usersService.desactiverUser(user.id)
+      : this.usersService.activerUser(user.id);
+    action$.subscribe({
       next: () => {
-        const action = user.locked ? 'activé' : 'désactivé';
+        const action = user.activated && !user.locked ? 'desactive' : 'active';
         this.notificationService.showSuccess('Statut modifié', `${userName} a été ${action} avec succès.`);
         this.loadUsers();
       },
@@ -377,6 +467,10 @@ export class UsersComponent implements OnInit, OnDestroy {
       }
     });
   }
+  activateUser(user: BaUserDto): void {
+    this.toggleUserActivation(user);
+  }
+
 
   // Méthodes utilitaires pour la compatibilité
   toggleRole(role: BaRoleDto): void {
@@ -401,23 +495,28 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   startCreateUser(): void {
+    if (!this.canManageUsers) {
+      this.notificationService.showError('Acces refuse', 'Action reservee aux administrateurs et aux chefs de service.');
+      return;
+    }
     this.resetForm();
     this.showCreateForm = true;
   }
 
   onFonctionChange(): void {
     const f = this.form.fonction;
-    if (f === 'AGENT') {
-      this.autoAssignHierarchyForAgent();
-      return;
-    }
-    if (this.requiresServiceSelection) {
+    if (!this.requiresServiceSelection) {
       this.form.idService = undefined;
     }
+    this.form.idSuperieur = undefined;
     this.form.idSuperieurSecondaire = undefined;
+    this.form.nomCompletSuperieur = undefined;
+    this.form.nomCompletSuperieurSecondaire = undefined;
     if (f === 'DIRECTEUR_GENERAL') {
-      this.form.idSuperieur = undefined;
+      this.form.idDepartement = undefined;
+      this.form.idAgence = undefined;
     }
+    this.fillHierarchy();
   }
 
   onDepartementChange(): void {
@@ -428,13 +527,15 @@ export class UsersComponent implements OnInit, OnDestroy {
     if (!agenceIsValid) {
       this.form.idAgence = undefined;
     }
-    this.autoAssignHierarchyForAgent();
+    this.fillHierarchy();
   }
 
   onServiceChange(): void {
-    this.form.idSuperieurSecondaire = undefined;
-    this.autoAssignHierarchyForAgent();
+    this.fillHierarchy();
   }
+
+  fillHierarchy(): void {fillAgentHierarchy(this.form, this.users, this.services);}
+  get agentHierarchy(){return agentHierarchyCandidates(this.form, this.users, this.services);}
 
   get filteredAgences(): BaAgenceDto[] {
     if (!this.form.idDepartement) {
@@ -459,19 +560,11 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   get availableChefsService(): BaUserDto[] {
-    return this.users.filter((u) =>
-      u.fonction === 'CHEF_SERVICE' &&
-      u.id !== this.form.id &&
-      (!this.form.idService || u.idService === this.form.idService)
-    );
+    return this.agentHierarchy.chiefs;
   }
 
   get availableDirecteurs(): BaUserDto[] {
-    return this.users.filter((u) =>
-      u.fonction === 'DIRECTEUR' &&
-      u.id !== this.form.id &&
-      (!this.form.idDepartement || u.idDepartement === this.form.idDepartement)
-    );
+    return this.agentHierarchy.directors;
   }
 
   get availableDG(): BaUserDto[] {
@@ -481,7 +574,7 @@ export class UsersComponent implements OnInit, OnDestroy {
   get availableDirectSuperiors(): BaUserDto[] {
     switch (this.form.fonction) {
       case 'AGENT':
-        return this.availableDirecteurs;
+        return this.availableChefsService;
       case 'CHEF_SERVICE':
         return this.availableDirecteurs;
       case 'DIRECTEUR':
@@ -496,54 +589,49 @@ export class UsersComponent implements OnInit, OnDestroy {
     return this.form.fonction === 'AGENT';
   }
 
+  get requiresDepartmentSelection(): boolean {
+    return this.form.fonction !== 'DIRECTEUR_GENERAL' && this.form.fonction !== 'DIRECTEUR_GENERAL_ADJOINT';
+  }
+
   private validateHierarchySelection(): boolean {
     const f = this.form.fonction;
     if (!f) {
       return true;
     }
     if (f === 'AGENT') {
+      if (!this.form.idDepartement) {
+        this.notificationService.showWarning('Validation requise', 'Le département est obligatoire pour un agent.');
+        return false;
+      }
       if (!this.form.idService) {
         this.notificationService.showWarning('Validation requise', 'Le service est obligatoire pour un AGENT.');
         return false;
       }
-      this.autoAssignHierarchyForAgent();
-      if (!this.form.idSuperieur || !this.form.idSuperieurSecondaire) {
-        this.notificationService.showWarning('Hierarchie invalide', 'Aucun DIRECTEUR du departement ou CHEF_SERVICE du service n a ete trouve.');
+      if (!this.filteredServices.some(s => s.id === this.form.idService)) {
+        this.notificationService.showWarning('Affectation invalide', 'Le service doit appartenir au département sélectionné.');
         return false;
       }
-      if (this.form.idSuperieur === this.form.idSuperieurSecondaire) {
+      if (this.form.idSuperieur && this.form.idSuperieur === this.form.idSuperieurSecondaire) {
         this.notificationService.showWarning('Hierarchie invalide', 'Les deux superieurs doivent etre differents.');
         return false;
       }
     } else if (f === 'DIRECTEUR_GENERAL') {
       this.form.idService = undefined;
+      this.form.idDepartement = undefined;
+      this.form.idAgence = undefined;
       this.form.idSuperieur = undefined;
       this.form.idSuperieurSecondaire = undefined;
     } else {
       if (!this.requiresServiceSelection) {
         this.form.idService = undefined;
       }
-      if (!this.form.idSuperieur) {
-        this.notificationService.showWarning('Hierarchie invalide', 'Ce profil doit avoir un superieur direct.');
-        return false;
-      }
       this.form.idSuperieurSecondaire = undefined;
     }
     return true;
   }
 
-  private autoAssignHierarchyForAgent(): void {
-    if (this.form.fonction !== 'AGENT') {
-      return;
-    }
-    const directeurDepartement = this.availableDirecteurs[0];
-    const chefService = this.availableChefsService[0];
-    this.form.idSuperieur = directeurDepartement?.id;
-    this.form.idSuperieurSecondaire = chefService?.id;
-  }
-
   get activeUsersCount(): number {
-    return this.users.filter((u) => u.activated && !u.locked).length;
+    return this.activeUsers.length;
   }
 
   get lockedUsersCount(): number {
@@ -551,7 +639,36 @@ export class UsersComponent implements OnInit, OnDestroy {
   }
 
   get inactiveUsersCount(): number {
-    return this.users.filter((u) => !u.activated).length;
+    return this.inactiveUsers.length;
+  }
+
+  isActiveUser(user: BaUserDto): boolean {
+    return !!user.activated && !user.locked;
+  }
+
+  get canManageUsers(): boolean {
+    return this.isCurrentUserAdmin || this.currentUser?.fonction === 'CHEF_SERVICE';
+  }
+
+  get isCurrentUserAdmin(): boolean {
+    return !!this.currentUser?.roles?.some((role) => {
+      const code = (role.code || '').toUpperCase();
+      const libelle = (role.libelle || '').toUpperCase();
+      return code === 'BA_ADMIN';
+    });
+  }
+
+  canManageUser(user?: BaUserDto | null): boolean {
+    if (!this.canManageUsers || !user) {
+      return false;
+    }
+    if (this.isCurrentUserAdmin) {
+      return true;
+    }
+    return this.currentUser?.fonction === 'CHEF_SERVICE'
+      && user.fonction === 'AGENT'
+      && !!this.currentUser.idService
+      && this.currentUser.idService === user.idService;
   }
 
   private extractError(err: any, fallback: string): string {

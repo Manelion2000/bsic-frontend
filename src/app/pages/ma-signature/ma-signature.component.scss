@@ -1,0 +1,30 @@
+:host { display: block; }
+.signature-page { max-width: 1160px; margin: 0 auto; }
+.signature-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 24px; align-items: start; }
+.signature-card, .help-card { padding: 26px; }
+.card-heading { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 20px; }
+h2 { font-size: 1.2rem; margin: 0 0 16px; }
+.card-heading h2 { margin: 0; }
+.preview { min-height: 230px; padding: 24px; border: 1px solid #dbe3ec; border-radius: 12px; display: grid; place-items: center; background: #fff; }
+.preview img { display: block; max-width: 100%; max-height: 210px; object-fit: contain; }
+.preview.empty { background: #f6f8fb; text-align: center; color: #53657a; }
+.preview strong { display: block; }
+.pen { display: block; font-size: 2rem; margin-bottom: 12px; }
+.metadata { font-size: .85rem; color: #53657a; overflow-wrap: anywhere; }
+.upload-zone { display: grid; gap: 8px; margin: 20px 0; padding: 18px; border: 1px dashed #8da2ba; border-radius: 10px; background: #f7f9fc; }
+.upload-zone span, .help-card p, .help-card li { color: #53657a; font-size: .92rem; line-height: 1.7; }
+.upload-zone input { max-width: 100%; margin-top: 6px; }
+.upload-zone input::file-selector-button { border: 1px solid #b8c7d6; padding: 8px 12px; border-radius: 6px; margin-right: 10px; background: white; color: #18324d; cursor: pointer; }
+.disabled { opacity: .65; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.information { background: #f2f6fa; border-left: 3px solid #b18933; padding: 16px; margin-top: 24px; border-radius: 4px; }
+.information p:last-child { margin-bottom: 0; }
+.help-card ol { padding-left: 22px; }
+.help-card li { padding-bottom: 12px; }
+.badge.ready { background: #e7f4eb; color: #236741; }
+.feedback { padding: 14px 18px; border-radius: 8px; }
+.feedback.error { background: #fff0ef; color: #9d302a; }
+.feedback.success { background: #e7f4eb; color: #236741; }
+.remove-panel { border-top: 1px solid #e3e9f0; padding-top: 18px; margin-top: 20px; font-size: .9rem; line-height: 1.6; }
+.danger { color: #a52f2a; }
+@media (max-width: 800px) { .signature-layout { grid-template-columns: 1fr; } .signature-card, .help-card { padding: 20px; } }

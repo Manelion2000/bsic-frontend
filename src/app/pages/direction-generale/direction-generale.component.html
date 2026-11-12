@@ -1,0 +1,90 @@
+<section class="direction-page">
+  <header class="direction-header">
+    <div><span class="eyebrow">Administration · Direction générale</span><h1>{{ title }}</h1>
+      <p *ngIf="kind === 'dg'">Créez le compte du directeur général, sans département ni service obligatoire.</p>
+      <p *ngIf="kind === 'dga'">Créez les responsables des pôles Opérations et Développement pour les circuits de validation.</p>
+    </div>
+    <button class="btn btn--primary" type="button" [disabled]="!canCreate" (click)="openCreate()">{{ kind === 'dg' ? 'Créer le DG' : 'Créer un DGA' }}</button>
+  </header>
+  <p class="notice success" role="status" *ngIf="message">{{ message }}</p>
+  <p class="notice error" role="alert" *ngIf="error">{{ error }}</p>
+  <p *ngIf="loading" role="status">Chargement des responsables…</p>
+  <button *ngIf="loadFailed" type="button" class="btn btn--light" (click)="load()">Réessayer</button>
+
+  <section class="panel form-panel" *ngIf="mode">
+    <h2>{{ mode === 'affectation' ? 'Affectation d’un DGA' : (kind === 'dg' ? 'Nouveau compte DG' : 'Nouveau compte DGA') }}</h2>
+    <p *ngIf="mode === 'creation'">La fonction et les droits de connexion sont attribués automatiquement. Les identifiants sont envoyés à l’adresse email renseignée.</p>
+    <form #responsableForm="ngForm" (ngSubmit)="save(responsableForm)">
+      <fieldset [disabled]="busy"><div class="form-grid">
+        <ng-container *ngIf="mode === 'creation'">
+          <label>Nom *<input name="nom" required maxlength="50" [(ngModel)]="form.nom" autocomplete="family-name" /></label>
+          <label>Prénom *<input name="prenom" required maxlength="50" [(ngModel)]="form.prenom" autocomplete="given-name" /></label>
+          <label>Email de connexion *<input name="email" type="email" required email maxlength="50" [(ngModel)]="form.email" autocomplete="email" /></label>
+          <label>Téléphone *<input name="telephone" type="tel" required maxlength="50" [(ngModel)]="form.telephone" autocomplete="tel" placeholder="+226…" /></label>
+          <label>Sexe *<select name="sexe" required [(ngModel)]="form.sexe"><option value="MASCULIN">Masculin</option><option value="FEMININ">Féminin</option></select></label>
+          <label>Matricule<input name="matricule" maxlength="50" [(ngModel)]="form.matricule" /></label>
+        </ng-container>
+        <ng-container *ngIf="mode === 'affectation'">
+          <label>DGA *<select name="idDga" required [(ngModel)]="assignment.idDga"><option [ngValue]="undefined">Sélectionner un DGA</option><option *ngFor="let user of availableUsers" [ngValue]="user.id">{{ name(user) }}</option></select></label>
+          <label>Pôle *<select name="pole" required [(ngModel)]="assignment.pole"><option *ngFor="let pole of poles" [value]="pole">{{ poleLabel(pole) }}</option></select></label>
+          <label>Début *<input name="dateDebut" type="date" required [(ngModel)]="assignment.dateDebut" /></label>
+          <label>Fin<input name="dateFin" type="date" [min]="assignment.dateDebut || ''" [(ngModel)]="assignment.dateFin" /></label>
+          <label class="checkbox"><input type="checkbox" name="actif" [(ngModel)]="assignment.actif" /> Affectation active</label>
+        </ng-container>
+        <ng-container *ngIf="mode === 'creation' && kind === 'dga'">
+          <label>Pôle *<select name="pole" required [(ngModel)]="form.pole"><option *ngFor="let pole of poles" [value]="pole">{{ poleLabel(pole) }}</option></select></label>
+          <label>Début de fonction *<input name="dateDebut" type="date" required [(ngModel)]="form.dateDebut" /></label>
+          <label>Fin de fonction<input name="dateFin" type="date" [min]="form.dateDebut || ''" [(ngModel)]="form.dateFin" /></label>
+        </ng-container>
+      </div></fieldset>
+      <p class="notice error" *ngIf="submitted && responsableForm.invalid">Vérifiez les champs obligatoires et le format de l’email.</p>
+      <div class="actions"><button type="submit" class="btn btn--primary" [disabled]="busy">{{ busy ? 'Enregistrement…' : 'Enregistrer' }}</button><button type="button" class="btn btn--light" [disabled]="busy" (click)="close()">Annuler</button></div>
+    </form>
+  </section>
+
+  <ng-container *ngIf="!loading && !loadFailed">
+    <div class="responsibilities" *ngIf="kind === 'dg'">
+      <article class="responsibility"><h2>DG en fonction</h2><p class="person">{{ activeDg ? name(activeDg) : 'Aucun DG actif' }}</p>
+        <p>{{ activeDg?.email || 'Vous pouvez créer le premier compte DG.' }}</p>
+        <p *ngIf="activeDg">Pour remplacer le DG, désactivez d’abord son compte dans la gestion des utilisateurs.</p>
+        <p class="notice error" *ngIf="availableUsers.length > 1">Plusieurs DG sont actifs. Corrigez leurs fonctions ou leurs comptes avant de soumettre des demandes RH.</p>
+      </article>
+    </div>
+    <div class="responsibilities" *ngIf="kind === 'dga'">
+      <article class="responsibility" *ngFor="let pole of poles"><h2>DGA {{ poleLabel(pole) }}</h2>
+        <ng-container *ngIf="currentAssignments(pole).length; else emptyPole">
+          <div *ngFor="let value of currentAssignments(pole)"><p class="person">{{ value.nomDga }}</p>
+            <p>{{ accountAvailable(value) ? 'Compte actif' : 'Compte indisponible : vérifiez son activation et sa fonction.' }}</p>
+          </div>
+          <p class="notice error" *ngIf="currentAssignments(pole).length > 1">Plusieurs affectations se chevauchent. Corrigez les périodes.</p>
+        </ng-container>
+        <ng-template #emptyPole><p class="person muted">Aucun DGA affecté actuellement</p><button class="btn btn--light" type="button" [disabled]="busy" (click)="openCreate(pole)">Créer le DGA {{ poleLabel(pole) }}</button></ng-template>
+      </article>
+    </div>
+
+    <section class="panel" *ngIf="kind === 'dga'">
+      <div class="panel-heading"><h2>Affectations aux pôles</h2><button class="btn btn--light" type="button" [disabled]="busy || !availableUsers.length" (click)="openAssignment()">Rattacher un DGA existant</button></div>
+      <p class="muted">Un seul responsable par pôle sur une même période. Les deux pôles doivent être occupés par des personnes différentes.</p>
+      <div class="table-wrapper"><table><thead><tr><th>Pôle</th><th>Responsable</th><th>Début</th><th>Fin</th><th>État</th><th>Actions</th></tr></thead><tbody>
+        <tr *ngFor="let value of assignments"><td>{{ poleLabel(value.pole) }}</td><td>{{ value.nomDga }}</td><td>{{ value.dateDebut | date:'dd/MM/yyyy' }}</td><td>{{ value.dateFin ? (value.dateFin | date:'dd/MM/yyyy') : 'Sans date de fin' }}</td><td>{{ value.actif === false ? 'Désactivée' : 'Active' }}</td>
+          <td class="actions"><button class="btn btn--light" type="button" [disabled]="busy" (click)="openAssignment(value)">Modifier</button>
+            <ng-container *ngIf="value.actif !== false">
+              <button class="btn btn--light" type="button" [disabled]="busy" *ngIf="pendingDeactivationId !== value.id" (click)="pendingDeactivationId = value.id">Désactiver</button>
+              <ng-container *ngIf="pendingDeactivationId === value.id"><button class="btn btn--danger" type="button" [disabled]="busy" (click)="deactivate(value)">Confirmer</button><button class="btn btn--light" type="button" [disabled]="busy" (click)="pendingDeactivationId = undefined">Annuler</button></ng-container>
+            </ng-container>
+          </td></tr>
+        <tr *ngIf="!assignments.length"><td colspan="6">Aucune affectation enregistrée.</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section class="panel"><div class="panel-heading"><h2>{{ kind === 'dg' ? 'Comptes DG' : 'Comptes DGA' }}</h2><a class="btn btn--light" routerLink="/users">Gérer les comptes</a></div>
+      <div class="table-wrapper"><table><thead><tr><th>Nom complet</th><th>Email de connexion</th><th>Téléphone</th><th>Compte</th></tr></thead><tbody>
+        <tr *ngFor="let user of users"><td>{{ name(user) }}</td><td>{{ user.email }}</td><td>{{ user.telephone }}</td><td>{{ available(user) ? 'Actif' : 'Inactif ou verrouillé' }}</td></tr>
+        <tr *ngIf="!users.length"><td colspan="4">Aucun compte {{ kind === 'dg' ? 'DG' : 'DGA' }} enregistré.</td></tr>
+      </tbody></table></div>
+    </section>
+  </ng-container>
+
+</section>
+
+<app-temporary-password [credential]="credential" (closed)="credential=undefined" />

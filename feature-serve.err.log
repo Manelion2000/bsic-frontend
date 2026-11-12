@@ -1,0 +1,296 @@
+[1m[33mComponent HMR has been enabled, see https://angular.dev/hmr for more info.[39m[22m
+[1m[31m[2m23:25:22[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /api/public/features[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)[39m[22m
+[1m[31m[2m23:25:22[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /api/public/annuaires/departements[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)[39m[22m
+[1m[31m[2m23:25:22[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /api/public/annuaires/services[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)[39m[22m
+[1m[31m[2m23:25:22[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /api/public/annuaires/agences[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)[39m[22m
+[1m[31m[2m23:25:31[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /api/public/features[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)[39m[22m
+[1m[31m[2m23:25:31[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /api/annuaires/departements[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)[39m[22m
+[1m[31m[2m23:25:31[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /api/annuaires/services[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)[39m[22m
+[1m[31m[2m23:25:31[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /api/annuaires/agences[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)[39m[22m
+[1m[31m[2m23:25:31[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /api/annuaires/annuaire[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieRequestDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:574:32:
+[37m      574 │ ...tionSortie(dto: [32mBaAutorisationSortieRequestDto[37m): Observable<Ba...
+          ╵                    [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:574:76:
+[37m      574 │ ...orisationSortieRequestDto): Observable<[32mBaAutorisationSortieDto[37m> {
+          ╵                                           [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:575:26:
+[37m      575 │ ...turn this.http.post<[32mBaAutorisationSortieDto[37m>(`${API_BASE_URL}/...
+          ╵                        [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:578:49:
+[37m      578 │ ...ndesAutorisationSortie(): Observable<[32mBaAutorisationSortieDto[37m[]> {
+          ╵                                         [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:579:25:
+[37m      579 │ ...eturn this.http.get<[32mBaAutorisationSortieDto[37m[]>(`${API_BASE_URL...
+          ╵                        [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:582:54:
+[37m      582 │ ...risationSortieAValider(): Observable<[32mBaAutorisationSortieDto[37m[]> {
+          ╵                                         [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:583:25:
+[37m      583 │ ...eturn this.http.get<[32mBaAutorisationSortieDto[37m[]>(`${API_BASE_URL...
+          ╵                        [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:586:74:
+[37m      586 │ ...ing, commentaire?: string): Observable<[32mBaAutorisationSortieDto[37m> {
+          ╵                                           [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:588:25:
+[37m      588 │ ...eturn this.http.put<[32mBaAutorisationSortieDto[37m>(`${API_BASE_URL}/...
+          ╵                        [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:591:73:
+[37m      591 │ ...ring, commentaire: string): Observable<[32mBaAutorisationSortieDto[37m> {
+          ╵                                           [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:593:25:
+[37m      593 │ ...eturn this.http.put<[32mBaAutorisationSortieDto[37m>(`${API_BASE_URL}/...
+          ╵                        [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceRequestDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:600:28:
+[37m      600 │ ...priseService(dto: [32mBaRepriseServiceRequestDto[37m): Observable<BaRe...
+          ╵                      [32m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:600:68:
+[37m      600 │ ...o: BaRepriseServiceRequestDto): Observable<[32mBaRepriseServiceDto[37m> {
+          ╵                                               [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:601:26:
+[37m      601 │ ...return this.http.post<[32mBaRepriseServiceDto[37m>(`${API_BASE_URL}/re...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:604:38:
+[37m      604 │   getMesReprisesService(): Observable<[32mBaRepriseServiceDto[37m[]> {
+          ╵                                       [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:605:25:
+[37m      605 │     return this.http.get<[32mBaRepriseServiceDto[37m[]>(`${API_BASE_URL}/...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:608:43:
+[37m      608 │   getReprisesServiceAValider(): Observable<[32mBaRepriseServiceDto[37m[]> {
+          ╵                                            [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:609:25:
+[37m      609 │     return this.http.get<[32mBaRepriseServiceDto[37m[]>(`${API_BASE_URL}/...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:612:44:
+[37m      612 │   getRepriseService(id: string): Observable<[32mBaRepriseServiceDto[37m> {
+          ╵                                             [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:613:25:
+[37m      613 │     return this.http.get<[32mBaRepriseServiceDto[37m>(`${API_BASE_URL}/re...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:616:70:
+[37m      616 │ ... string, commentaire?: string): Observable<[32mBaRepriseServiceDto[37m> {
+          ╵                                               [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:618:25:
+[37m      618 │     return this.http.put<[32mBaRepriseServiceDto[37m>(`${API_BASE_URL}/re...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:621:69:
+[37m      621 │ ...: string, commentaire: string): Observable<[32mBaRepriseServiceDto[37m> {
+          ╵                                               [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:623:25:
+[37m      623 │     return this.http.put<[32mBaRepriseServiceDto[37m>(`${API_BASE_URL}/re...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRhDemandesFilter'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:630:39:
+[37m      630 │ ...Autorisations(filter: [32mBaRhDemandesFilter[37m = {}): Observable<BaR...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRhDemandesStatsDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:630:76:
+[37m      630 │ ...ter: BaRhDemandesFilter = {}): Observable<[32mBaRhDemandesStatsDto[37m> {
+          ╵                                              [32m~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRhDemandesStatsDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:631:25:
+[37m      631 │ ...return this.http.get<[32mBaRhDemandesStatsDto[37m>(`${API_BASE_URL}/au...
+          ╵                         [32m~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRhDemandesFilter'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:636:32:
+[37m      636 │ ...Autorisations(filter: [32mBaRhDemandesFilter[37m = {}, page = 0, size ...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieSuiviDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:636:103:
+[37m      636 │ ...e = 20): Observable<PageResponse<[32mBaAutorisationSortieSuiviDto[37m>> {
+          ╵                                     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaAutorisationSortieSuiviDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:637:38:
+[37m      637 │ ...get<PageResponse<[32mBaAutorisationSortieSuiviDto[37m>>(`${API_BASE_UR...
+          ╵                     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRhDemandesFilter'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:642:34:
+[37m      642 │ ...iquesReprises(filter: [32mBaRhDemandesFilter[37m = {}): Observable<BaR...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRhDemandesStatsDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:642:71:
+[37m      642 │ ...ter: BaRhDemandesFilter = {}): Observable<[32mBaRhDemandesStatsDto[37m> {
+          ╵                                              [32m~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRhDemandesStatsDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:643:25:
+[37m      643 │ ...return this.http.get<[32mBaRhDemandesStatsDto[37m>(`${API_BASE_URL}/re...
+          ╵                         [32m~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRhDemandesFilter'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:648:27:
+[37m      648 │ ...SuiviReprises(filter: [32mBaRhDemandesFilter[37m = {}, page = 0, size ...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceSuiviDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:648:98:
+[37m      648 │ ... size = 20): Observable<PageResponse<[32mBaRepriseServiceSuiviDto[37m>> {
+          ╵                                         [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRepriseServiceSuiviDto'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:649:38:
+[37m      649 │ ...p.get<PageResponse<[32mBaRepriseServiceSuiviDto[37m>>(`${API_BASE_URL}...
+          ╵                       [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'BaRhDemandesFilter'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/services/habilitations.service.ts:755:29:
+[37m      755 │   private toRhParams(filter: [32mBaRhDemandesFilter[37m): HttpParams {
+          ╵                              [32m~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m

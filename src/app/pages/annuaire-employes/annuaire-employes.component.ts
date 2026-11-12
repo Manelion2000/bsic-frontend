@@ -1,19 +1,30 @@
-import { Component, OnInit } from '@angular/core';
+import { TemporaryPasswordComponent } from '../../shared/temporary-password.component';
+import { TemporaryCredential } from '../../services/users.service';
+import { DirectoryNavComponent } from '../../shared/directory-nav.component';
+import { directoryMatches, directoryFunction, directoryInitials } from '../../shared/directory.utils';
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { AnnuaireService, BaUserDto, BaServiceDto, BaDepartementDto, BaAgenceDto } from '../../services/annuaire.service';
 import { UsersService } from '../../services/users.service';
 
 import { extractErrorMessage } from '../../shared/error.utils';
+import { agentHierarchyCandidates, fillAgentHierarchy } from '../../shared/agent-hierarchy.utils';
 
 @Component({
   selector: 'app-annuaire-employes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DirectoryNavComponent, TemporaryPasswordComponent],
   templateUrl: './annuaire-employes.component.html',
   styleUrl: './annuaire-employes.component.scss'
 })
 export class AnnuaireEmployesComponent implements OnInit {
+  @ViewChild('editDialog',{static:true}) dialog!:ElementRef<HTMLDialogElement>;
+  @ViewChild('deleteDialog',{static:true}) deleteDialog!:ElementRef<HTMLDialogElement>;
+  pendingDelete?:BaUserDto;
+  credential?:TemporaryCredential;
+  loading=false;departmentFilter='';functionFilter='';functionLabel=directoryFunction;initials=directoryInitials;
+  functions=['AGENT','CHEF_SERVICE','DIRECTEUR','DIRECTEUR_GENERAL_ADJOINT','DIRECTEUR_GENERAL'];
   employes: BaUserDto[] = [];
   allUsers: BaUserDto[] = [];
   services: BaServiceDto[] = [];
@@ -43,11 +54,11 @@ export class AnnuaireEmployesComponent implements OnInit {
 
   get pagedEmployes(): BaUserDto[] {
     const start = this.pageIndex * this.pageSize;
-    return this.employes.slice(start, start + this.pageSize);
+    return this.filteredEmployes.slice(start, start + this.pageSize);
   }
 
   get totalPages(): number {
-    return Math.max(1, Math.ceil(this.employes.length / this.pageSize));
+    return Math.max(1, Math.ceil(this.filteredEmployes.length / this.pageSize));
   }
 
   get filteredServices(): BaServiceDto[] {
@@ -64,49 +75,41 @@ export class AnnuaireEmployesComponent implements OnInit {
     return this.agences.filter((a) => a.idDepartement === this.form.idDepartement);
   }
 
-  load(): void {
-    this.usersService.getUsers().subscribe({
-      next: (data) => {
-        this.allUsers = data || [];
-        const query = (this.searchQuery || '').trim().toLowerCase();
-        this.employes = (data || []).filter((u) => {
-          if (!query) return true;
-          const full = `${u.nom || ''} ${u.prenom || ''} ${u.email || ''} ${u.matricule || ''}`.toLowerCase();
-          return full.includes(query);
-        });
-        this.pageIndex = 0;
-      },
-      error: (err) => (this.message = this.extractError(err, 'Erreur lors du chargement des employes.'))
-    });
-  }
+  get filteredEmployes():BaUserDto[]{return this.allUsers.filter(u=>(!this.departmentFilter||u.idDepartement===this.departmentFilter)&&(!this.functionFilter||u.fonction===this.functionFilter)&&directoryMatches([u.nom,u.prenom,u.emailPro,u.email,u.matricule,u.nomDepartement,u.nomService,u.nomAgence,u.telephone,u.telephoneFixe,this.functionLabel(u.fonction)],this.searchQuery)).sort((a,b)=>[a.nom,a.prenom].join(' ').localeCompare([b.nom,b.prenom].join(' '),'fr'));}
+  load(): void {if(this.loading)return;this.loading=true;this.usersService.getUsers().subscribe({next:data=>{this.allUsers=data||[];this.employes=this.allUsers;this.pageIndex=0;this.loading=false;if(this.showForm)this.fillHierarchy();},error:err=>{this.loading=false;this.setFeedback(this.extractError(err,'Impossible de charger les collaborateurs.'),'error');}});}
 
   loadRefs(): void {
-    this.annuaireService.getServices().subscribe({ next: (s) => (this.services = s || []) });
+    this.annuaireService.getServices().subscribe({ next: (s) => {this.services = s || [];if(this.showForm)this.fillHierarchy();} });
     this.annuaireService.getDepartements().subscribe({ next: (d) => (this.departements = d || []) });
     this.annuaireService.getAgences().subscribe({ next: (a) => (this.agences = a || []) });
   }
 
   selectEmploye(emp: BaUserDto): void {
+    if(this.isSaving||this.isUpdating||this.deletingId)return;
     this.form = { ...emp };
-    this.showForm = true;
+    this.fillHierarchy();
+    this.showForm = true;this.submitted=false;this.message='';this.dialog.nativeElement.showModal();
   }
 
   resetForm(): void {
+    if(this.isSaving||this.isUpdating)return;this.dialog?.nativeElement.close();
     this.submitted = false;
     this.form = { sexe: 'MASCULIN' };
     this.showForm = false;
   }
 
   startCreate(): void {
+    if(this.isSaving||this.isUpdating)return;
     this.submitted = false;
     this.form = { sexe: 'MASCULIN' };
-    this.showForm = true;
+    this.showForm = true;this.submitted=false;this.message='';this.dialog.nativeElement.showModal();
   }
 
   onDepartementChange(): void {
     if (!this.form.idDepartement) {
       this.form.idService = undefined;
       this.form.idAgence = undefined;
+      this.fillHierarchy();
       return;
     }
     const serviceIsValid = this.filteredServices.some((s) => s.id === this.form.idService);
@@ -117,14 +120,15 @@ export class AnnuaireEmployesComponent implements OnInit {
     if (!agenceIsValid) {
       this.form.idAgence = undefined;
     }
+    this.fillHierarchy();
   }
 
   onFonctionChange(): void {
     const f = this.form.fonction;
-    if (f === 'AGENT') {
-      this.autoAssignHierarchyForAgent();
-      return;
-    }
+    this.form.idSuperieur = undefined;
+    this.form.nomCompletSuperieur = undefined;
+    this.form.nomCompletSuperieurSecondaire = undefined;
+    if (f === 'AGENT') {this.fillHierarchy();return;}
     if (!this.requiresServiceSelection) {
       this.form.idService = undefined;
     }
@@ -134,20 +138,16 @@ export class AnnuaireEmployesComponent implements OnInit {
     }
   }
 
+  onServiceChange(): void {this.fillHierarchy();}
+  fillHierarchy(): void {fillAgentHierarchy(this.form, this.allUsers, this.services);}
+  get agentHierarchy(){return agentHierarchyCandidates(this.form, this.allUsers, this.services);}
+
   get availableChefsService(): BaUserDto[] {
-    return this.allUsers.filter((u) =>
-      u.fonction === 'CHEF_SERVICE' &&
-      u.id !== this.form.id &&
-      (!this.form.idService || u.idService === this.form.idService)
-    );
+    return this.agentHierarchy.chiefs;
   }
 
   get availableDirecteurs(): BaUserDto[] {
-    return this.allUsers.filter((u) =>
-      u.fonction === 'DIRECTEUR' &&
-      u.id !== this.form.id &&
-      (!this.form.idDepartement || u.idDepartement === this.form.idDepartement)
-    );
+    return this.agentHierarchy.directors;
   }
 
   get availableDG(): BaUserDto[] {
@@ -157,7 +157,7 @@ export class AnnuaireEmployesComponent implements OnInit {
   get availableDirectSuperiors(): BaUserDto[] {
     switch (this.form.fonction) {
       case 'AGENT':
-        return this.availableDirecteurs;
+        return this.availableChefsService;
       case 'CHEF_SERVICE':
         return this.availableDirecteurs;
       case 'DIRECTEUR':
@@ -181,8 +181,10 @@ export class AnnuaireEmployesComponent implements OnInit {
   }
 
   create(formRef: NgForm): void {
+    if(this.isSaving||this.isUpdating||this.form.id)return;
     this.submitted = true;
     if (formRef.invalid) {
+      formRef.control.markAllAsTouched();
       this.setFeedback('Veuillez renseigner les champs obligatoires.', 'error');
       return;
     }
@@ -198,10 +200,11 @@ export class AnnuaireEmployesComponent implements OnInit {
       locked: this.form.locked ?? false
     };
     this.usersService.createUser(payload).subscribe({
-      next: () => {
+      next: (created) => {
         this.setFeedback('Utilisateur cree avec succes.', 'success');
-        this.resetForm();
         this.isSaving = false;
+        this.resetForm();
+        this.credential=created?.initialCredential;
         this.load();
       },
       error: (err) => {
@@ -212,8 +215,10 @@ export class AnnuaireEmployesComponent implements OnInit {
   }
 
   update(formRef: NgForm): void {
+    if(this.isSaving||this.isUpdating)return;
     this.submitted = true;
     if (formRef.invalid) {
+      formRef.control.markAllAsTouched();
       this.setFeedback('Veuillez renseigner les champs obligatoires.', 'error');
       return;
     }
@@ -228,8 +233,8 @@ export class AnnuaireEmployesComponent implements OnInit {
     this.usersService.updateUser(this.form.id, this.form as any).subscribe({
       next: () => {
         this.setFeedback('Utilisateur mis a jour avec succes.', 'success');
-        this.resetForm();
         this.isUpdating = false;
+        this.resetForm();
         this.load();
       },
       error: (err) => {
@@ -239,7 +244,10 @@ export class AnnuaireEmployesComponent implements OnInit {
     });
   }
 
+  requestDelete(emp:BaUserDto){if(this.deletingId||this.isSaving||this.isUpdating)return;this.pendingDelete=emp;this.message='';this.deleteDialog.nativeElement.showModal();}
+  cancelDelete(){if(this.deletingId)return;this.pendingDelete=undefined;this.deleteDialog.nativeElement.close();}
   delete(emp: BaUserDto): void {
+    if(this.deletingId||this.isSaving||this.isUpdating)return;
     if (!emp.id) {
       this.setFeedback('Employe sans identifiant.', 'error');
       return;
@@ -249,6 +257,7 @@ export class AnnuaireEmployesComponent implements OnInit {
       next: () => {
         this.setFeedback('Utilisateur supprime avec succes.', 'success');
         this.deletingId = undefined;
+        this.cancelDelete();
         this.load();
       },
       error: (err) => {
@@ -267,38 +276,12 @@ export class AnnuaireEmployesComponent implements OnInit {
   }
 
   private validateHierarchySelection(): boolean {
-    const f = this.form.fonction;
-    if (!f) {
-      return true;
-    }
-    if (f === 'AGENT') {
-      if (!this.form.idService) {
-        this.setFeedback('Le service est obligatoire pour un AGENT.', 'error');
-        return false;
-      }
-      this.autoAssignHierarchyForAgent();
-      if (!this.form.idSuperieur || !this.form.idSuperieurSecondaire) {
-        this.setFeedback('Aucun DIRECTEUR du departement ou CHEF_SERVICE du service n a ete trouve.', 'error');
-        return false;
-      }
-      if (this.form.idSuperieur === this.form.idSuperieurSecondaire) {
-        this.setFeedback('Les deux superieurs doivent etre differents.', 'error');
-        return false;
-      }
-    } else if (f === 'DIRECTEUR_GENERAL') {
-      this.form.idService = undefined;
-      this.form.idSuperieur = undefined;
-      this.form.idSuperieurSecondaire = undefined;
-    } else {
-      if (!this.requiresServiceSelection) {
-        this.form.idService = undefined;
-      }
-      if (!this.form.idSuperieur) {
-        this.setFeedback('Ce profil doit avoir un superieur direct.', 'error');
-        return false;
-      }
-      this.form.idSuperieurSecondaire = undefined;
-    }
+    if(this.form.fonction==='AGENT' && (!this.form.idDepartement||!this.form.idService)){this.setFeedback('Choisissez un département et un service pour cet agent.','error');return false;}
+    if(this.form.idSuperieur && this.form.idSuperieur===this.form.idSuperieurSecondaire){this.setFeedback('Les deux responsables doivent être différents.','error');return false;}
+    if(this.form.id && (this.form.idSuperieur===this.form.id||this.form.idSuperieurSecondaire===this.form.id)){this.setFeedback('Un collaborateur ne peut pas être son propre responsable.','error');return false;}
+    if(!this.requiresServiceSelection)this.form.idService=undefined;
+    if(!this.requiresSecondarySuperior)this.form.idSuperieurSecondaire=undefined;
+    if(this.form.fonction==='DIRECTEUR_GENERAL')this.form.idSuperieur=undefined;
     return true;
   }
 
@@ -316,11 +299,4 @@ export class AnnuaireEmployesComponent implements OnInit {
     }, 4000);
   }
 
-  private autoAssignHierarchyForAgent(): void {
-    if (this.form.fonction !== 'AGENT') {
-      return;
-    }
-    this.form.idSuperieur = this.availableDirecteurs[0]?.id;
-    this.form.idSuperieurSecondaire = this.availableChefsService[0]?.id;
-  }
 }
